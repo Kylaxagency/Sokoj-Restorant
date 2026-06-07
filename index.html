@@ -2915,6 +2915,33 @@
       </div>
     </div>
 
+    <!-- ── PROVISIONAL MAP — replace iframe src with real map image when ready ── -->
+    <div class="reveal" style="margin:3rem auto 0;max-width:780px;width:100%;">
+      <div style="position:relative;border:0.5px solid rgba(184,124,90,0.25);overflow:hidden;">
+        <iframe
+          src="https://www.google.com/maps?q=Restoran+Sokoj,+Misarska+12,+Beograd&output=embed"
+          width="100%"
+          height="360"
+          style="display:block;border:0;filter:grayscale(1) invert(1) contrast(0.85) brightness(0.75);"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Restoran Sokoj — Mišarska 12-14, Beograd">
+        </iframe>
+        <!-- Copper overlay label -->
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.75rem 1.2rem;background:rgba(17,17,16,0.82);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <span style="font-family:var(--sans);font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--copper);display:block;">Find Us</span>
+            <span style="font-family:var(--serif);font-size:1rem;color:var(--ivory);">Mišarska 12-14, Vračar, Belgrade</span>
+          </div>
+          <a href="https://www.google.com/maps/place/Restoran+Sokoj,+Misarska+12,+Beograd" target="_blank" rel="noopener"
+             style="font-family:var(--sans);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--copper);text-decoration:none;border:0.5px solid rgba(184,124,90,0.5);padding:0.5rem 1rem;transition:all 0.3s;">
+            Open in Maps
+          </a>
+        </div>
+      </div>
+    </div>
+
     <div class="reveal" style="text-align:center;">
       <button class="btn-primary" onclick="openModal()"><span>Make a Reservation</span></button>
 
