@@ -160,6 +160,115 @@
   .detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: rgba(245,242,236,0.4); font-size: 1.2rem; cursor: pointer; }
   .detail-close:hover { color: var(--copper); }
 
+  /* Analytics */
+  .analytics-section {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.15);
+    padding: 1.5rem; margin-bottom: 2rem;
+  }
+  .analytics-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.75rem;
+  }
+  .analytics-header h3 {
+    font-family: var(--serif); font-size: 1rem; font-weight: 300; color: var(--ivory);
+  }
+  .analytics-header input[type=date] {
+    padding: 0.4rem 0.8rem; background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
+    font-size: 0.8rem; outline: none;
+  }
+  .analytics-header input[type=date]:focus { border-color: var(--copper); }
+  .analytics-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;
+  }
+  .an-card { text-align: center; padding: 1rem 0.5rem; }
+  .an-card .an-num {
+    font-family: var(--serif); font-size: 1.8rem; font-weight: 300; color: var(--copper);
+  }
+  .an-card .an-lbl {
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,242,236,0.35); margin-top: 0.25rem;
+  }
+  .an-card.revenue .an-num { color: #6dbf67; }
+  .an-card.cash    .an-num { color: #95d5b2; }
+  .an-card.card-pay .an-num { color: #82b4e0; }
+
+  /* Payment modal */
+  .pay-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 300; align-items: center; justify-content: center;
+  }
+  .pay-overlay.open { display: flex; }
+  .pay-box {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.3);
+    padding: 2rem; width: 400px; max-width: 95vw;
+  }
+  .pay-box h3 {
+    font-family: var(--serif); font-size: 1.2rem; font-weight: 300;
+    color: var(--ivory); margin-bottom: 0.4rem;
+  }
+  .pay-box p { font-size: 0.75rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; letter-spacing: 0.05em; }
+  .pay-methods { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .pay-method-btn {
+    flex: 1; padding: 0.9rem; background: none;
+    border: 0.5px solid rgba(245,242,236,0.15); color: rgba(245,242,236,0.5);
+    font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .pay-method-btn.active {
+    border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.1);
+  }
+  .pay-amount-label {
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,242,236,0.4); margin-bottom: 0.5rem; display: block;
+  }
+  .pay-amount-wrap { position: relative; margin-bottom: 1.5rem; }
+  .pay-amount-wrap input {
+    width: 100%; padding: 0.85rem 3.5rem 0.85rem 1rem;
+    background: rgba(255,255,255,0.04); border: 0.5px solid rgba(245,242,236,0.15);
+    color: var(--ivory); font-size: 1.1rem; outline: none;
+  }
+  .pay-amount-wrap input:focus { border-color: var(--copper); }
+  .pay-amount-wrap span {
+    position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+    font-size: 0.75rem; color: rgba(245,242,236,0.35); letter-spacing: 0.1em;
+  }
+  .pay-actions { display: flex; gap: 0.75rem; }
+  .pay-actions button {
+    flex: 1; padding: 0.85rem; font-size: 0.7rem; letter-spacing: 0.2em;
+    text-transform: uppercase; border: 0.5px solid; cursor: pointer; transition: all 0.15s;
+  }
+  .pay-btn-cancel { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.4); }
+  .pay-btn-cancel:hover { border-color: rgba(245,242,236,0.3); color: var(--ivory); }
+  .pay-btn-confirm { background: var(--copper); border-color: var(--copper); color: #fff; }
+  .pay-btn-confirm:hover { background: var(--copper-light); border-color: var(--copper-light); }
+
+  /* Cancel confirm modal */
+  .cancel-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 300; align-items: center; justify-content: center;
+  }
+  .cancel-overlay.open { display: flex; }
+  .cancel-box {
+    background: var(--charcoal); border: 0.5px solid rgba(180,60,60,0.4);
+    padding: 2rem; width: 380px; max-width: 95vw; text-align: center;
+  }
+  .cancel-box .cancel-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .cancel-box h3 {
+    font-family: var(--serif); font-size: 1.1rem; font-weight: 300;
+    color: var(--ivory); margin-bottom: 0.5rem;
+  }
+  .cancel-box p { font-size: 0.8rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; }
+  .cancel-actions { display: flex; gap: 0.75rem; }
+  .cancel-actions button {
+    flex: 1; padding: 0.8rem; font-size: 0.7rem; letter-spacing: 0.2em;
+    text-transform: uppercase; border: 0.5px solid; cursor: pointer; transition: all 0.15s;
+  }
+  .cancel-btn-back   { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.5); }
+  .cancel-btn-back:hover   { border-color: rgba(245,242,236,0.3); }
+  .cancel-btn-confirm { background: rgba(180,60,60,0.2); border-color: rgba(180,60,60,0.5); color: #e07070; }
+  .cancel-btn-confirm:hover { background: rgba(180,60,60,0.3); }
+
   @media (max-width: 768px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
     .main { padding: 1rem; }
@@ -198,6 +307,24 @@
       <div class="stat-card"><div class="num" id="statToday">—</div><div class="lbl">Today</div></div>
       <div class="stat-card"><div class="num" id="statPending">—</div><div class="lbl">Pending</div></div>
       <div class="stat-card"><div class="num" id="statConfirmed">—</div><div class="lbl">Confirmed</div></div>
+    </div>
+
+    <!-- Daily Analytics -->
+    <div class="analytics-section">
+      <div class="analytics-header">
+        <h3>Daily Analytics</h3>
+        <input type="date" id="analyticsDate" onchange="loadAnalytics()">
+      </div>
+      <div class="analytics-grid">
+        <div class="an-card"><div class="an-num" id="anTotal">—</div><div class="an-lbl">Bookings</div></div>
+        <div class="an-card"><div class="an-num" id="anCompleted">—</div><div class="an-lbl">Completed</div></div>
+        <div class="an-card"><div class="an-num" id="anPending">—</div><div class="an-lbl">Pending</div></div>
+        <div class="an-card"><div class="an-num" id="anNoShow">—</div><div class="an-lbl">No Show</div></div>
+        <div class="an-card"><div class="an-num" id="anGuests">—</div><div class="an-lbl">Guests</div></div>
+        <div class="an-card revenue"><div class="an-num" id="anRevenue">—</div><div class="an-lbl">Revenue (RSD)</div></div>
+        <div class="an-card cash"><div class="an-num" id="anCash">—</div><div class="an-lbl">Cash (RSD)</div></div>
+        <div class="an-card card-pay"><div class="an-num" id="anCard">—</div><div class="an-lbl">Card (RSD)</div></div>
+      </div>
     </div>
 
     <!-- Quick filters -->
@@ -247,6 +374,40 @@
           <tr><td colspan="8" class="empty-state">Loading…</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- Payment modal -->
+<div class="pay-overlay" id="payOverlay">
+  <div class="pay-box">
+    <h3>Complete Reservation</h3>
+    <p>Enter payment details to close this reservation.</p>
+    <div class="pay-methods">
+      <button class="pay-method-btn active" id="payBtnCash" onclick="selectPayMethod('cash')">💵 Cash</button>
+      <button class="pay-method-btn"        id="payBtnCard" onclick="selectPayMethod('card')">💳 Card</button>
+    </div>
+    <label class="pay-amount-label">Amount paid</label>
+    <div class="pay-amount-wrap">
+      <input type="number" id="payAmount" placeholder="0" min="0">
+      <span>RSD</span>
+    </div>
+    <div class="pay-actions">
+      <button class="pay-btn-cancel"  onclick="closePayModal()">Cancel</button>
+      <button class="pay-btn-confirm" onclick="submitPayment()">Confirm & Complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel confirm modal -->
+<div class="cancel-overlay" id="cancelOverlay">
+  <div class="cancel-box">
+    <div class="cancel-icon">⚠️</div>
+    <h3>Cancel Reservation?</h3>
+    <p id="cancelMsg">This will cancel the reservation. The table will become available again.</p>
+    <div class="cancel-actions">
+      <button class="cancel-btn-back"    onclick="closeCancelModal()">Keep It</button>
+      <button class="cancel-btn-confirm" id="cancelConfirmBtn">Yes, Cancel</button>
     </div>
   </div>
 </div>
@@ -401,7 +562,11 @@
   function loadAll() {
     loadStats();
     loadReservations();
+    loadAnalytics();
   }
+
+  /* ── Set analytics date to today on load ── */
+  document.getElementById('analyticsDate').value = new Date().toISOString().split('T')[0];
 
   /* ── STATS (uses get_dashboard_stats RPC) ── */
   async function loadStats() {
@@ -505,9 +670,9 @@
         <td><span class="status status-${r.status}">${r.status}</span></td>
         <td onclick="event.stopPropagation()">
           <div class="actions">
-            ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus('${r.id}','confirmed')">Confirm</button>`  : ''}
-            ${r.status !== 'completed'  ? `<button class="act-btn act-complete" onclick="setStatus('${r.id}','completed')">Done</button>`      : ''}
-            ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="setStatus('${r.id}','cancelled')">Cancel</button>`    : ''}
+            ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus('${r.id}','confirmed')">Confirm</button>`      : ''}
+            ${r.status !== 'completed'  ? `<button class="act-btn act-complete" onclick="openPayModal('${r.id}')">Done</button>`               : ''}
+            ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="openCancelModal('${r.id}')">Cancel</button>`          : ''}
             ${r.status !== 'no_show'    ? `<button class="act-btn act-noshow"   onclick="setStatus('${r.id}','no_show')">No Show</button>`     : ''}
             <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
           </div>
@@ -534,17 +699,121 @@
       .eq('id', id);
     if (error) { console.error('Status update error:', error); return; }
     loadAll();
+    loadAnalytics();
+  }
+
+  /* ── PAYMENT MODAL ── */
+  let _payResId       = null;
+  let _payMethod      = 'cash';
+  let _cancelResId    = null;
+  let _cancelStep     = 1;
+
+  function openPayModal(id) {
+    _payResId  = id;
+    _payMethod = 'cash';
+    document.getElementById('payBtnCash').classList.add('active');
+    document.getElementById('payBtnCard').classList.remove('active');
+    document.getElementById('payAmount').value = '';
+    document.getElementById('payOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('payAmount').focus(), 100);
+  }
+
+  function closePayModal() {
+    document.getElementById('payOverlay').classList.remove('open');
+    _payResId = null;
+  }
+
+  function selectPayMethod(method) {
+    _payMethod = method;
+    document.getElementById('payBtnCash').classList.toggle('active', method === 'cash');
+    document.getElementById('payBtnCard').classList.toggle('active', method === 'card');
+  }
+
+  async function submitPayment() {
+    const amount = parseInt(document.getElementById('payAmount').value, 10);
+    if (!_payResId) return;
+    if (isNaN(amount) || amount < 0) {
+      document.getElementById('payAmount').focus();
+      return;
+    }
+    const { error } = await _supabase
+      .from('reservations')
+      .update({ status: 'completed', payment_method: _payMethod, payment_amount: amount })
+      .eq('id', _payResId);
+    if (error) { console.error('Payment error:', error); return; }
+    closePayModal();
+    loadAll();
+    loadAnalytics();
+  }
+
+  /* ── CANCEL MODAL (double confirm) ── */
+  function openCancelModal(id) {
+    _cancelResId  = id;
+    _cancelStep   = 1;
+    document.getElementById('cancelMsg').textContent =
+      'This will cancel the reservation. The table will become available again.';
+    const btn = document.getElementById('cancelConfirmBtn');
+    btn.textContent = 'Yes, Cancel';
+    btn.onclick     = cancelStep2;
+    document.getElementById('cancelOverlay').classList.add('open');
+  }
+
+  function cancelStep2() {
+    document.getElementById('cancelMsg').textContent =
+      'Are you absolutely sure? This cannot be undone.';
+    const btn = document.getElementById('cancelConfirmBtn');
+    btn.textContent = 'Cancel Reservation';
+    btn.style.background    = 'rgba(180,60,60,0.4)';
+    btn.style.borderColor   = 'rgba(180,60,60,0.8)';
+    btn.onclick = confirmCancel;
+  }
+
+  async function confirmCancel() {
+    if (!_cancelResId) return;
+    closeCancelModal();
+    const { error } = await _supabase
+      .from('reservations')
+      .update({ status: 'cancelled' })
+      .eq('id', _cancelResId);
+    if (error) { console.error('Cancel error:', error); return; }
+    loadAll();
+    loadAnalytics();
+  }
+
+  function closeCancelModal() {
+    document.getElementById('cancelOverlay').classList.remove('open');
+    const btn = document.getElementById('cancelConfirmBtn');
+    btn.style.background  = '';
+    btn.style.borderColor = '';
+    _cancelResId = null;
   }
 
   /* ── DELETE ── */
   async function deleteRes(id) {
-    if (!confirm('Permanently delete this reservation?')) return;
+    if (!confirm('Permanently delete this reservation? This cannot be undone.')) return;
     const { error } = await _supabase
       .from('reservations')
       .delete()
       .eq('id', id);
     if (error) { console.error('Delete error:', error); return; }
     loadAll();
+    loadAnalytics();
+  }
+
+  /* ── DAILY ANALYTICS ── */
+  async function loadAnalytics() {
+    const dateInput = document.getElementById('analyticsDate');
+    const date = dateInput.value || new Date().toISOString().split('T')[0];
+    const { data, error } = await _supabase.rpc('get_daily_analytics', { p_date: date });
+    if (error || !data) return;
+    document.getElementById('anTotal').textContent     = data.total        ?? '—';
+    document.getElementById('anCompleted').textContent = data.completed    ?? '—';
+    document.getElementById('anPending').textContent   = (data.pending ?? 0) + (data.confirmed ?? 0);
+    document.getElementById('anNoShow').textContent    = data.no_show      ?? '—';
+    document.getElementById('anGuests').textContent    = data.total_guests ?? '—';
+    document.getElementById('anRevenue').textContent   = (data.revenue ?? 0).toLocaleString();
+    document.getElementById('anCash').textContent      = (data.cash    ?? 0).toLocaleString();
+    document.getElementById('anCard').textContent      = (data.card    ?? 0).toLocaleString();
   }
 
   /* ── DETAIL MODAL ── */
@@ -560,6 +829,7 @@
       <div class="detail-row"><span class="k">Status</span>           <span class="v"><span class="status status-${r.status}">${r.status}</span></span></div>
       <div class="detail-row"><span class="k">Special Requests</span> <span class="v">${esc(r.special_requests)}</span></div>
       <div class="detail-row"><span class="k">Created</span>          <span class="v">${r.created_at ? new Date(r.created_at).toLocaleString('en-GB') : '—'}</span></div>
+      ${r.payment_method ? `<div class="detail-row"><span class="k">Payment</span> <span class="v">${r.payment_method.toUpperCase()} · ${(r.payment_amount ?? 0).toLocaleString()} RSD</span></div>` : ''}
     `;
     document.getElementById('detailOverlay').classList.add('open');
   }
