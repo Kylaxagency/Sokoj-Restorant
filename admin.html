@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sokoj — Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --copper: #b87c5a;
+    --copper-light: #d4a082;
+    --warm-black: #111110;
+    --charcoal: #1a1a18;
+    --stone: #6b6860;
+    --ivory: #f5f2ec;
+    --cream: #ede9e0;
+    --serif: 'Georgia', serif;
+    --sans: system-ui, -apple-system, sans-serif;
+  }
+  body { font-family: var(--sans); background: var(--warm-black); color: var(--ivory); min-height: 100vh; }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+  }
+  .login-box {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.2);
+    padding: 3rem 2.5rem; width: 360px; text-align: center;
+  }
+  .login-box h1 { font-family: var(--serif); font-size: 1.6rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.4rem; }
+  .login-box p  { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--copper); margin-bottom: 2rem; }
+  .login-box input {
+    width: 100%; padding: 0.85rem 1rem; background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(245,242,236,0.15); color: var(--ivory);
+    font-size: 0.9rem; margin-bottom: 1rem; outline: none;
+  }
+  .login-box input:focus { border-color: var(--copper); }
+  .btn-copper {
+    width: 100%; padding: 0.9rem; background: var(--copper); color: #fff;
+    border: none; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn-copper:hover { background: var(--copper-light); }
+  .login-error { color: #e07070; font-size: 0.8rem; margin-top: 0.75rem; min-height: 1.2em; }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display: none; }
+
+  header {
+    background: var(--charcoal); border-bottom: 0.5px solid rgba(184,124,90,0.2);
+    padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-family: var(--serif); font-size: 1.2rem; font-weight: 300; }
+  header h1 span { color: var(--copper); }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .badge-live { background: #2d6a4f; color: #95d5b2; font-size: 0.65rem; letter-spacing: 0.15em; padding: 0.3rem 0.7rem; border-radius: 20px; text-transform: uppercase; }
+  .admin-email { font-size: 0.7rem; color: rgba(245,242,236,0.4); letter-spacing: 0.05em; }
+  .btn-logout { background: none; border: 0.5px solid rgba(245,242,236,0.2); color: rgba(245,242,236,0.5); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.4rem 0.9rem; cursor: pointer; }
+  .btn-logout:hover { border-color: var(--copper); color: var(--copper); }
+
+  .main { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.15);
+    padding: 1.5rem; text-align: center;
+  }
+  .stat-card .num { font-family: var(--serif); font-size: 2.5rem; font-weight: 300; color: var(--copper); }
+  .stat-card .lbl { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(245,242,236,0.4); margin-top: 0.3rem; }
+
+  /* Quick filters */
+  .quick-filters { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .qf-btn {
+    padding: 0.4rem 1rem; background: none;
+    border: 0.5px solid rgba(245,242,236,0.12); color: rgba(245,242,236,0.5);
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .qf-btn:hover, .qf-btn.active { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.08); }
+
+  /* Filters */
+  .filters {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;
+  }
+  .filters input, .filters select {
+    padding: 0.6rem 0.9rem; background: var(--charcoal);
+    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
+    font-size: 0.8rem; outline: none;
+  }
+  .filters input:focus, .filters select:focus { border-color: var(--copper); }
+  .filter-search { flex: 1; min-width: 200px; }
+  .filter-btn {
+    padding: 0.6rem 1.2rem; background: none;
+    border: 0.5px solid rgba(184,124,90,0.5); color: var(--copper);
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+  }
+  .filter-btn:hover { background: rgba(184,124,90,0.1); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead th {
+    text-align: left; padding: 0.75rem 1rem;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: rgba(245,242,236,0.35); border-bottom: 0.5px solid rgba(184,124,90,0.15);
+  }
+  tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  tbody td { padding: 0.9rem 1rem; color: rgba(245,242,236,0.85); }
+  tbody td.muted { color: rgba(245,242,236,0.35); font-size: 0.8rem; }
+
+  /* Status badges */
+  .status {
+    display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
+  }
+  .status-pending   { background: rgba(180,140,60,0.15); color: #d4b060; border: 0.5px solid rgba(180,140,60,0.3); }
+  .status-confirmed { background: rgba(45,106,79,0.2);   color: #95d5b2; border: 0.5px solid rgba(45,106,79,0.4); }
+  .status-cancelled { background: rgba(180,60,60,0.15);  color: #e07070; border: 0.5px solid rgba(180,60,60,0.3); }
+  .status-completed { background: rgba(100,100,100,0.15);color: #aaa;    border: 0.5px solid rgba(100,100,100,0.3); }
+
+  /* Action buttons */
+  .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .act-btn {
+    padding: 0.3rem 0.65rem; font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase; border: 0.5px solid; cursor: pointer; background: none;
+    transition: all 0.15s;
+  }
+  .act-confirm  { border-color: rgba(45,106,79,0.5);  color: #95d5b2; }
+  .act-confirm:hover  { background: rgba(45,106,79,0.15); }
+  .act-cancel   { border-color: rgba(180,60,60,0.4);  color: #e07070; }
+  .act-cancel:hover   { background: rgba(180,60,60,0.1); }
+  .act-complete { border-color: rgba(184,124,90,0.4); color: var(--copper); }
+  .act-complete:hover { background: rgba(184,124,90,0.1); }
+  .act-delete   { border-color: rgba(255,255,255,0.1); color: rgba(245,242,236,0.3); }
+  .act-delete:hover   { border-color: rgba(180,60,60,0.4); color: #e07070; }
+
+  .empty-state { text-align: center; padding: 4rem; color: rgba(245,242,236,0.2); font-style: italic; }
+
+  /* Detail modal */
+  .detail-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-box {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.25);
+    padding: 2rem; width: 460px; max-width: 95vw; position: relative;
+  }
+  .detail-box h3 { font-family: var(--serif); font-size: 1.3rem; font-weight: 300; margin-bottom: 1.5rem; color: var(--ivory); }
+  .detail-row { display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+  .detail-row .k { color: rgba(245,242,236,0.4); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; }
+  .detail-row .v { color: var(--ivory); }
+  .detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: rgba(245,242,236,0.4); font-size: 1.2rem; cursor: pointer; }
+  .detail-close:hover { color: var(--copper); }
+
+  @media (max-width: 768px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>Sokoj</h1>
+    <p>Admin Dashboard</p>
+    <input type="email"    id="adminEmail" placeholder="Admin email address">
+    <input type="password" id="adminPass"  placeholder="Password" onkeydown="if(event.key==='Enter')login()">
+    <button class="btn-copper" onclick="login()">Sign In</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+  <header>
+    <h1>Sokoj <span>·</span> Reservations</h1>
+    <div class="header-right">
+      <span class="badge-live" id="liveDate"></span>
+      <span class="admin-email" id="adminEmailDisplay"></span>
+      <button class="btn-logout" onclick="logout()">Log out</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card"><div class="num" id="statTotal">—</div><div class="lbl">Total</div></div>
+      <div class="stat-card"><div class="num" id="statToday">—</div><div class="lbl">Today</div></div>
+      <div class="stat-card"><div class="num" id="statPending">—</div><div class="lbl">Pending</div></div>
+      <div class="stat-card"><div class="num" id="statConfirmed">—</div><div class="lbl">Confirmed</div></div>
+    </div>
+
+    <!-- Quick filters -->
+    <div class="quick-filters">
+      <button class="qf-btn active" onclick="quickFilter('all',this)">All</button>
+      <button class="qf-btn" onclick="quickFilter('today',this)">Today</button>
+      <button class="qf-btn" onclick="quickFilter('upcoming',this)">Upcoming</button>
+      <button class="qf-btn" onclick="quickFilter('pending',this)">Pending</button>
+      <button class="qf-btn" onclick="quickFilter('confirmed',this)">Confirmed</button>
+      <button class="qf-btn" onclick="quickFilter('cancelled',this)">Cancelled</button>
+      <button class="qf-btn" onclick="quickFilter('completed',this)">Completed</button>
+    </div>
+
+    <!-- Search + filters -->
+    <div class="filters">
+      <input type="text"  id="filterSearch" class="filter-search" placeholder="Search name, email, phone, table…" oninput="debounceLoad()">
+      <input type="date"  id="filterDate" onchange="loadReservations()">
+      <select id="filterStatus" onchange="loadReservations()">
+        <option value="">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="cancelled">Cancelled</option>
+        <option value="completed">Completed</option>
+      </select>
+      <button class="filter-btn" onclick="clearFilters()">Clear</button>
+      <button class="filter-btn" onclick="loadAll()" style="margin-left:auto;">↻ Refresh</button>
+    </div>
+
+    <!-- Reservations table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Guest</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Table</th>
+            <th>Guests</th>
+            <th>Contact</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="resBody">
+          <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Detail modal -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-box">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <h3>Reservation Details</h3>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+  /* ┌─────────────────────────────────────────────────────────┐
+     │  Replace these two values with your Supabase project    │
+     │  URL and anon key from:                                 │
+     │  Supabase Dashboard → Settings → API                   │
+     └─────────────────────────────────────────────────────────┘ */
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+  const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  /* ── LIVE DATE ── */
+  function updateDate() {
+    const d = new Date();
+    document.getElementById('liveDate').textContent =
+      d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  }
+  updateDate();
+  setInterval(updateDate, 60000);
+
+  /* ── LOGIN (Supabase Auth) ── */
+  async function login() {
+    const email = document.getElementById('adminEmail').value.trim();
+    const pass  = document.getElementById('adminPass').value;
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = '';
+
+    if (!email || !pass) {
+      errEl.textContent = 'Please enter your email and password.';
+      return;
+    }
+
+    const { data: authData, error: authError } =
+      await _supabase.auth.signInWithPassword({ email, password: pass });
+
+    if (authError) {
+      errEl.textContent = 'Incorrect email or password.';
+      return;
+    }
+
+    // Verify user is in admins table
+    const { data: adminRow, error: adminError } =
+      await _supabase.from('admins').select('role').single();
+
+    if (adminError || !adminRow) {
+      await _supabase.auth.signOut();
+      errEl.textContent = 'Access denied. This account is not an admin.';
+      return;
+    }
+
+    document.getElementById('adminEmailDisplay').textContent = email;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadAll();
+  }
+
+  async function logout() {
+    await _supabase.auth.signOut();
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminEmail').value = '';
+    document.getElementById('adminPass').value  = '';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('adminEmailDisplay').textContent = '';
+  }
+
+  // Restore session on page load
+  _supabase.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { data: adminRow } = await _supabase.from('admins').select('role').single();
+    if (adminRow) {
+      document.getElementById('adminEmailDisplay').textContent = session.user.email;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadAll();
+    }
+  });
+
+  /* ── LOAD ALL ── */
+  function loadAll() {
+    loadStats();
+    loadReservations();
+  }
+
+  /* ── STATS (uses get_dashboard_stats RPC) ── */
+  async function loadStats() {
+    const { data, error } = await _supabase.rpc('get_dashboard_stats');
+    if (error || !data) return;
+    document.getElementById('statTotal').textContent     = data.total     ?? '—';
+    document.getElementById('statToday').textContent     = data.today     ?? '—';
+    document.getElementById('statPending').textContent   = data.pending   ?? '—';
+    document.getElementById('statConfirmed').textContent = data.confirmed ?? '—';
+  }
+
+  /* ── QUICK FILTERS ── */
+  const today = new Date().toISOString().split('T')[0];
+  let _quickMode = 'all';
+
+  function quickFilter(mode, btn) {
+    _quickMode = mode;
+    document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Reset manual filters
+    document.getElementById('filterDate').value   = '';
+    document.getElementById('filterStatus').value = '';
+
+    // Apply preset filters
+    if (mode === 'today')     document.getElementById('filterDate').value   = today;
+    if (mode === 'pending')   document.getElementById('filterStatus').value = 'pending';
+    if (mode === 'confirmed') document.getElementById('filterStatus').value = 'confirmed';
+    if (mode === 'cancelled') document.getElementById('filterStatus').value = 'cancelled';
+    if (mode === 'completed') document.getElementById('filterStatus').value = 'completed';
+
+    loadReservations();
+  }
+
+  /* ── LOAD RESERVATIONS (uses search_reservations RPC) ── */
+  async function loadReservations() {
+    const search = document.getElementById('filterSearch').value.trim() || null;
+    const date   = document.getElementById('filterDate').value   || null;
+    const status = document.getElementById('filterStatus').value || null;
+
+    // For "upcoming": date_from = tomorrow
+    let dateFrom = date;
+    let dateTo   = date;
+    if (_quickMode === 'upcoming') {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      dateFrom = tomorrow.toISOString().split('T')[0];
+      dateTo   = null;
+    }
+
+    const { data, error } = await _supabase.rpc('search_reservations', {
+      p_query:     search,
+      p_status:    status,
+      p_date_from: dateFrom,
+      p_date_to:   dateTo,
+      p_limit:     200,
+      p_offset:    0
+    });
+
+    if (error) {
+      console.error('Load reservations error:', error);
+      document.getElementById('resBody').innerHTML =
+        '<tr><td colspan="8" class="empty-state">Failed to load reservations.</td></tr>';
+      return;
+    }
+
+    renderTable(data || []);
+  }
+
+  let _debounceTimer;
+  function debounceLoad() {
+    clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(loadReservations, 350);
+  }
+
+  function clearFilters() {
+    document.getElementById('filterSearch').value = '';
+    document.getElementById('filterDate').value   = '';
+    document.getElementById('filterStatus').value = '';
+    _quickMode = 'all';
+    document.querySelectorAll('.qf-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+    loadReservations();
+  }
+
+  /* ── RENDER TABLE ── */
+  function renderTable(rows) {
+    const tbody = document.getElementById('resBody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No reservations found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr onclick="showDetail(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="cursor:pointer;">
+        <td><strong>${esc(r.customer_name)}</strong></td>
+        <td>${formatDate(r.reservation_date)}</td>
+        <td>${r.reservation_time?.slice(0,5) || '—'}</td>
+        <td><strong style="color:var(--copper)">${esc(r.table_number)}</strong> <span class="muted">${esc(r.area)}</span></td>
+        <td>${r.guest_count}</td>
+        <td class="muted">${esc(r.customer_email)}<br>${esc(r.customer_phone)}</td>
+        <td><span class="status status-${r.status}">${r.status}</span></td>
+        <td onclick="event.stopPropagation()">
+          <div class="actions">
+            ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus('${r.id}','confirmed')">Confirm</button>`  : ''}
+            ${r.status !== 'completed'  ? `<button class="act-btn act-complete" onclick="setStatus('${r.id}','completed')">Done</button>`      : ''}
+            ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="setStatus('${r.id}','cancelled')">Cancel</button>`    : ''}
+            <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function esc(str) {
+    if (!str) return '—';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+  }
+
+  /* ── STATUS UPDATE ── */
+  async function setStatus(id, status) {
+    const { error } = await _supabase
+      .from('reservations')
+      .update({ status })
+      .eq('id', id);
+    if (error) { console.error('Status update error:', error); return; }
+    loadAll();
+  }
+
+  /* ── DELETE ── */
+  async function deleteRes(id) {
+    if (!confirm('Permanently delete this reservation?')) return;
+    const { error } = await _supabase
+      .from('reservations')
+      .delete()
+      .eq('id', id);
+    if (error) { console.error('Delete error:', error); return; }
+    loadAll();
+  }
+
+  /* ── DETAIL MODAL ── */
+  function showDetail(r) {
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-row"><span class="k">Name</span>             <span class="v">${esc(r.customer_name)}</span></div>
+      <div class="detail-row"><span class="k">Email</span>            <span class="v">${esc(r.customer_email)}</span></div>
+      <div class="detail-row"><span class="k">Phone</span>            <span class="v">${esc(r.customer_phone)}</span></div>
+      <div class="detail-row"><span class="k">Date</span>             <span class="v">${formatDate(r.reservation_date)}</span></div>
+      <div class="detail-row"><span class="k">Time</span>             <span class="v">${r.reservation_time?.slice(0,5) || '—'}</span></div>
+      <div class="detail-row"><span class="k">Table</span>            <span class="v">${esc(r.table_number)} · ${esc(r.area)}</span></div>
+      <div class="detail-row"><span class="k">Guests</span>           <span class="v">${r.guest_count}</span></div>
+      <div class="detail-row"><span class="k">Status</span>           <span class="v"><span class="status status-${r.status}">${r.status}</span></span></div>
+      <div class="detail-row"><span class="k">Special Requests</span> <span class="v">${esc(r.special_requests)}</span></div>
+      <div class="detail-row"><span class="k">Created</span>          <span class="v">${r.created_at ? new Date(r.created_at).toLocaleString('en-GB') : '—'}</span></div>
+    `;
+    document.getElementById('detailOverlay').classList.add('open');
+  }
+
+  function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+  }
+
+  document.getElementById('detailOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detailOverlay')) closeDetail();
+  });
+</script>
+</body>
+</html>
