@@ -279,32 +279,48 @@
     const email = document.getElementById('adminEmail').value.trim();
     const pass  = document.getElementById('adminPass').value;
     const errEl = document.getElementById('loginError');
-    errEl.textContent = '';
+    errEl.textContent = 'Signing in…';
 
     if (!email || !pass) {
       errEl.textContent = 'Please enter your email and password.';
       return;
     }
 
+    // Step 1: Authenticate with Supabase Auth
     const { data: authData, error: authError } =
       await _supabase.auth.signInWithPassword({ email, password: pass });
 
     if (authError) {
-      errEl.textContent = 'Incorrect email or password.';
+      const msg = authError.message || '';
+      if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) {
+        errEl.textContent = 'Email not confirmed — check your inbox and click the confirmation link first.';
+      } else if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+        errEl.textContent = 'Wrong email or password. Check your Supabase Auth user credentials.';
+      } else {
+        errEl.textContent = 'Auth error: ' + msg;
+      }
       return;
     }
 
-    // Verify user is in admins table
+    // Step 2: Verify this user exists in the admins table
     const { data: adminRow, error: adminError } =
-      await _supabase.from('admins').select('role').single();
+      await _supabase.from('admins').select('role').eq('email', email).maybeSingle();
 
-    if (adminError || !adminRow) {
+    if (adminError) {
       await _supabase.auth.signOut();
-      errEl.textContent = 'Access denied. This account is not an admin.';
+      errEl.textContent = 'Admin lookup failed: ' + adminError.message;
       return;
     }
 
-    document.getElementById('adminEmailDisplay').textContent = email;
+    if (!adminRow) {
+      await _supabase.auth.signOut();
+      errEl.textContent = 'Access denied — "' + email + '" is not in the admins table. Run the INSERT SQL in Supabase.';
+      return;
+    }
+
+    // Success
+    errEl.textContent = '';
+    document.getElementById('adminEmailDisplay').textContent = email + ' · ' + adminRow.role;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     loadAll();
@@ -323,9 +339,11 @@
   // Restore session on page load
   _supabase.auth.getSession().then(async ({ data: { session } }) => {
     if (!session) return;
-    const { data: adminRow } = await _supabase.from('admins').select('role').single();
+    const { data: adminRow } = await _supabase
+      .from('admins').select('role').eq('email', session.user.email).maybeSingle();
     if (adminRow) {
-      document.getElementById('adminEmailDisplay').textContent = session.user.email;
+      document.getElementById('adminEmailDisplay').textContent =
+        session.user.email + ' · ' + adminRow.role;
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       loadAll();
