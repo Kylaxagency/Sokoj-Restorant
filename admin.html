@@ -353,12 +353,17 @@
     }
   });
 
-  /* ── REALTIME: auto-refresh dashboard when reservations change ── */
+  /* ── REALTIME + POLLING: auto-refresh dashboard when reservations change ── */
   let _adminChannel   = null;
   let _adminRtTimer   = null;
+  let _adminPollTimer = null;
 
   function startAdminRealtime() {
     stopAdminRealtime();
+
+    // Polling fallback: refresh every 30 s regardless of realtime status
+    _adminPollTimer = setInterval(loadAll, 30000);
+
     _adminChannel = _supabase
       .channel('admin-reservations-live')
       .on('postgres_changes', {
@@ -373,10 +378,8 @@
         const badge = document.getElementById('liveDate');
         if (!badge) return;
         if (status === 'SUBSCRIBED') {
-          badge.style.background    = '#1a3d2b';
-          badge.style.color         = '#95d5b2';
-          badge.style.paddingLeft   = '0.5rem';
-          badge.innerHTML = '&#9679;&nbsp;' + badge.textContent.replace(/^[^\s]+\s/, '');
+          badge.style.background  = '#1a3d2b';
+          badge.style.color       = '#95d5b2';
           updateDate();
         }
       });
@@ -385,6 +388,8 @@
   function stopAdminRealtime() {
     if (_adminChannel) { _supabase.removeChannel(_adminChannel); _adminChannel = null; }
     clearTimeout(_adminRtTimer);
+    clearInterval(_adminPollTimer);
+    _adminPollTimer = null;
   }
 
   /* ── LOAD ALL ── */

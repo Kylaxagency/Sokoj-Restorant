@@ -3607,21 +3607,22 @@
   }
 
   /* ── REALTIME: keep floor map live while customer is on Step 2 ── */
+  let _pollTimer = null;
+
   function startRealtimeSync() {
     stopRealtimeSync();
     if (!_resDate || !_resTime) return;
 
-    const dot = document.getElementById('liveDot');
-    if (dot) { dot.style.background = '#6dbf67'; dot.style.boxShadow = '0 0 5px 1px rgba(109,191,103,0.5)'; }
-    const ind = document.getElementById('liveIndicator');
-    if (ind) ind.style.color = 'rgba(109,191,103,0.8)';
+    // Polling fallback: refresh every 15 s regardless of realtime status
+    _pollTimer = setInterval(refreshFloorMap, 15000);
 
+    // Realtime via reservation_slots view (anon-accessible, no PII)
     _resChannel = _supabase
       .channel('floor-sync-' + _resDate + '-' + _resTime.replace(':',''))
       .on('postgres_changes', {
         event:  '*',
         schema: 'public',
-        table:  'reservations',
+        table:  'reservation_slots',
         filter: 'reservation_date=eq.' + _resDate
       }, async (payload) => {
         const row = payload.new || payload.old || {};
@@ -3630,10 +3631,19 @@
         if (rowTime && rowTime !== ourTime) return;
         await refreshFloorMap();
       })
-      .subscribe();
+      .subscribe((status) => {
+        const dot = document.getElementById('liveDot');
+        const ind = document.getElementById('liveIndicator');
+        if (status === 'SUBSCRIBED') {
+          if (dot) { dot.style.background = '#6dbf67'; dot.style.boxShadow = '0 0 5px 1px rgba(109,191,103,0.5)'; }
+          if (ind) ind.style.color = 'rgba(109,191,103,0.8)';
+        }
+      });
   }
 
   function stopRealtimeSync() {
+    clearInterval(_pollTimer);
+    _pollTimer = null;
     if (_resChannel) {
       _supabase.removeChannel(_resChannel);
       _resChannel = null;
