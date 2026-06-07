@@ -752,10 +752,12 @@
         <td><span class="status status-${r.status}">${r.status}</span></td>
         <td onclick="event.stopPropagation()">
           <div class="actions">
-            ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus('${r.id}','confirmed')">Confirm</button>`      : ''}
-            ${r.status !== 'completed'  ? `<button class="act-btn act-complete" onclick="openPayModal('${r.id}')">Done</button>`               : ''}
-            ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="openCancelModal('${r.id}')">Cancel</button>`          : ''}
-            ${r.status !== 'no_show'    ? `<button class="act-btn act-noshow"   onclick="setStatus('${r.id}','no_show')">No Show</button>`     : ''}
+            ${r.status === 'completed' ? '' : `
+            ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus('${r.id}','confirmed')">Confirm</button>`  : ''}
+            ${                            `<button class="act-btn act-complete" onclick="openPayModal('${r.id}')">Done</button>`                    }
+            ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="openCancelModal('${r.id}')">Cancel</button>`         : ''}
+            ${r.status !== 'no_show'    ? `<button class="act-btn act-noshow"   onclick="setStatus('${r.id}','no_show')">No Show</button>`    : ''}
+            `}
             <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
           </div>
         </td>
@@ -859,6 +861,7 @@
 
     closePayModal();
     loadAll();
+    loadAnalytics();
   }
 
   /* ── CANCEL MODAL (double confirm) ── */
