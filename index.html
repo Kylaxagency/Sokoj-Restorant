@@ -3621,13 +3621,14 @@
     if (btn) btn.textContent = 'Confirm Reservation';
 
     if (error) {
-      if (error.code === 'P0003' || error.message?.includes('already booked') || error.message?.includes('conflict')) {
+      console.error('Reservation error:', error);
+      const msg = error.message || error.details || error.hint || JSON.stringify(error);
+      if (error.code === 'P0003' || msg.includes('already booked') || msg.includes('conflict')) {
         alert('This table was just taken by someone else. Please go back and choose another.');
         resGoStep2();
         return;
       }
-      console.error('Reservation error:', error);
-      alert('Something went wrong. Please try again.');
+      alert('Reservation error: ' + msg);
       return;
     }
 
