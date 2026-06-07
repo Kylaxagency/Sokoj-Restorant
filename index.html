@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --charcoal: #1a1a18;
@@ -3211,6 +3212,18 @@
 </div>
 
 
+<!-- ── SUPABASE CLIENT ── -->
+<script>
+  /* ┌─────────────────────────────────────────────────────────┐
+     │  Replace these two values with your Supabase project    │
+     │  URL and anon key from:                                 │
+     │  Supabase Dashboard → Settings → API                   │
+     └─────────────────────────────────────────────────────────┘ */
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+  const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+</script>
+
 <!-- ── MAIN SCRIPTS ── -->
 <script>
   /* ── NAVBAR ── */
@@ -3358,7 +3371,6 @@
   let guests = 2;
   let resSelectedTable = null;
   let resSelectedTableData = null;
-  const API_BASE = window.location.origin;
 
   /* Progress indicator */
   function setProgress(step) {
@@ -3413,6 +3425,9 @@
     document.getElementById('guestCount').textContent = guests;
   }
 
+  /* ── SUPABASE TABLE UUID CACHE ── */
+  let _tableUUIDMap = {};
+
   /* ── STEP 1 → 2 ── */
   async function resStep1Next() {
     const name  = document.getElementById('rf_name').value.trim();
@@ -3440,15 +3455,35 @@
     }
     err.style.display = 'none';
 
-    // Fetch booked tables
-    let booked = [];
-    try {
-      const res = await fetch(`${API_BASE}/api/available-tables?date=${date}&time=${time}`);
-      const data = await res.json();
-      booked = data.booked || [];
-    } catch (_) { /* offline — treat all as available */ }
+    const btn = document.querySelector('#resStep1 .btn-submit span');
+    if (btn) btn.textContent = 'Checking…';
 
-    applyResAvailability(booked);
+    try {
+      const { data, error } = await _supabase.rpc('get_available_tables', {
+        p_date:        date,
+        p_time:        time,
+        p_guest_count: guests
+      });
+
+      _tableUUIDMap = {};
+      const availableNumbers = [];
+
+      if (data && !error) {
+        data.forEach(t => {
+          _tableUUIDMap[t.table_number] = t.id;
+          availableNumbers.push(t.table_number);
+        });
+      }
+
+      applyResAvailability(availableNumbers);
+    } catch (_e) {
+      // Supabase unreachable — show all tables as available
+      const all = Array.from(document.querySelectorAll('#resFloor .rt')).map(g => g.dataset.tid);
+      applyResAvailability(all);
+    } finally {
+      if (btn) btn.textContent = 'Check Availability →';
+    }
+
     document.getElementById('step2Info').textContent =
       `${date} at ${time} · ${guests} guest${guests > 1 ? 's' : ''}`;
 
@@ -3456,13 +3491,14 @@
     setProgress(2);
   }
 
-  function applyResAvailability(booked) {
+  function applyResAvailability(availableNumbers) {
     document.querySelectorAll('#resFloor .rt').forEach(g => {
       const tid   = g.dataset.tid;
-      const seats = parseInt(g.dataset.seats);
       const rect  = g.querySelector('.tr');
       const lbl   = g.querySelector('.tl');
-      const unavail = booked.includes(tid) || seats < guests;
+      // A table is unavailable if it's not in the list returned by get_available_tables
+      // (that function already filters by date, time, guest count, and active status)
+      const unavail = !availableNumbers.includes(tid);
 
       if (unavail) {
         if (rect) { rect.setAttribute('fill','#2a2a20'); rect.setAttribute('stroke','rgba(245,242,236,0.07)'); }
@@ -3501,7 +3537,8 @@
     if (r) { r.setAttribute('fill','#d4a082'); r.setAttribute('stroke','#fff'); r.setAttribute('stroke-width','2.5'); }
     resSelectedTable = g;
     resSelectedTableData = {
-      id:   g.dataset.tid,
+      uuid:  _tableUUIDMap[g.dataset.tid] || null,
+      id:    g.dataset.tid,
       seats: g.dataset.seats,
       area:  g.dataset.tid.startsWith('G') ? 'Garden Terrace' : 'Indoor'
     };
@@ -3558,36 +3595,41 @@
   function resGoStep1() { showResStep('resStep1'); setProgress(1); }
   function resGoStep2() { showResStep('resStep2'); setProgress(2); }
 
-  /* ── SUBMIT ── */
+  /* ── SUBMIT to Supabase ── */
   async function resSubmit() {
-    const body = {
-      first_name: document.getElementById('rf_name').value.split(' ')[0] || document.getElementById('rf_name').value,
-      last_name:  document.getElementById('rf_name').value.split(' ').slice(1).join(' ') || '—',
-      email:      document.getElementById('rf_email').value,
-      phone:      document.getElementById('rf_phone').value,
-      date:       document.getElementById('rf_date').value,
-      time:       document.getElementById('rf_time').value,
-      guests,
-      table_id:   resSelectedTableData?.id   || 'TBD',
-      table_area: resSelectedTableData?.area  || '',
-      notes:      document.getElementById('rf_notes').value,
-    };
+    if (!resSelectedTableData?.uuid) {
+      alert('Table selection lost. Please go back and select a table again.');
+      resGoStep2();
+      return;
+    }
 
-    try {
-      const res = await fetch(`${API_BASE}/api/reservations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        if (res.status === 409) {
-          alert('This table was just booked. Please go back and select another.');
-          resGoStep2();
-          return;
-        }
+    const btn = document.querySelector('#resStep3 .btn-submit span');
+    if (btn) btn.textContent = 'Confirming…';
+
+    const { error } = await _supabase.from('reservations').insert({
+      customer_name:    document.getElementById('rf_name').value.trim(),
+      customer_email:   document.getElementById('rf_email').value.trim().toLowerCase(),
+      customer_phone:   document.getElementById('rf_phone').value.trim(),
+      guest_count:      guests,
+      reservation_date: document.getElementById('rf_date').value,
+      reservation_time: document.getElementById('rf_time').value,
+      table_id:         resSelectedTableData.uuid,
+      special_requests: document.getElementById('rf_notes').value.trim() || null,
+      status:           'pending'
+    });
+
+    if (btn) btn.textContent = 'Confirm Reservation';
+
+    if (error) {
+      if (error.code === 'P0003' || error.message?.includes('already booked') || error.message?.includes('conflict')) {
+        alert('This table was just taken by someone else. Please go back and choose another.');
+        resGoStep2();
+        return;
       }
-    } catch (_) { /* server not running — still show success */ }
+      console.error('Reservation error:', error);
+      alert('Something went wrong. Please try again.');
+      return;
+    }
 
     setProgress(4);
     showResStep('resSuccess');
