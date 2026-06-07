@@ -7,7 +7,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -196,16 +195,6 @@
   .pay-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
 
   /* ── Charts ── */
-  .chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
-  .chart-box {
-    background: rgba(0,0,0,0.15); border: 1px solid var(--border);
-    padding: 0.75rem 0.75rem 0.5rem; height: 140px; position: relative; border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .chart-box h4 {
-    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--text-dim); margin-bottom: 0.75rem; font-weight: 400;
-  }
 
   /* ── Tables (transaction records, daily breakdown) ── */
   .tx-wrap { overflow-x: auto; }
@@ -542,13 +531,6 @@
             </div>
           </div>
 
-          <div class="subsection-label">Trends</div>
-          <div class="chart-grid">
-            <div class="chart-box"><h4>Revenue Trend</h4><canvas id="chartRevenue" height="100"></canvas></div>
-            <div class="chart-box"><h4>Completed Reservations</h4><canvas id="chartCompleted" height="100"></canvas></div>
-            <div class="chart-box"><h4>Payment Distribution</h4><canvas id="chartPayMethod" height="100"></canvas></div>
-            <div class="chart-box"><h4>No-Show Trend</h4><canvas id="chartNoShow" height="100"></canvas></div>
-          </div>
 
           <div class="subsection-label">Daily Breakdown</div>
           <div class="tx-wrap">
@@ -894,8 +876,6 @@
   /* ══════════════════════════════════════
      MONTHLY ANALYTICS
   ══════════════════════════════════════ */
-  let _charts = {};
-
   async function loadMonthlyAnalytics() {
     const year  = parseInt(document.getElementById('anYear').value,10);
     const month = parseInt(document.getElementById('anMonth').value,10);
@@ -937,8 +917,6 @@
       <td>${fmt(sumCash)}</td><td>${fmt(sumCard)}</td><td>${sumNS}</td><td>${sumCanc}</td>
     </tr>`;
 
-    renderCharts(days, data);
-
     const dateFrom = new Date(year,month-1,1).toISOString().split('T')[0];
     const dateTo   = new Date(year,month,0).toISOString().split('T')[0];
     loadMonthlyTransactions(dateFrom, dateTo);
@@ -975,55 +953,6 @@
     </tr>`;
   }
 
-  /* ══════════════════════════════════════
-     CHARTS
-  ══════════════════════════════════════ */
-  const _chartOpts = {
-    responsive: true, maintainAspectRatio: false, aspectRatio: 2,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks:{color:'rgba(245,242,236,0.2)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.02)'} },
-      y: { ticks:{color:'rgba(245,242,236,0.2)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.04)'}, beginAtZero:true }
-    }
-  };
-
-  function destroyChart(key) { if(_charts[key]){_charts[key].destroy();delete _charts[key];} }
-
-  function renderCharts(days, data) {
-    const labels = days.map(d=>new Date(d.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'}));
-
-    destroyChart('revenue');
-    _charts.revenue = new Chart(document.getElementById('chartRevenue'),{
-      type:'bar', data:{
-        labels,
-        datasets:[{data:days.map(d=>d.revenue||0),backgroundColor:'rgba(109,191,103,0.4)',borderColor:'#6dbf67',borderWidth:1,borderRadius:3}]
-      }, options:{..._chartOpts, plugins:{...(_chartOpts.plugins),tooltip:{callbacks:{label:c=>fmt(c.raw)+' RSD'}}}}
-    });
-
-    destroyChart('completed');
-    _charts.completed = new Chart(document.getElementById('chartCompleted'),{
-      type:'line', data:{
-        labels,
-        datasets:[{data:days.map(d=>d.completed||0),borderColor:'var(--copper)',backgroundColor:'rgba(184,124,90,0.1)',fill:true,tension:0.35,pointRadius:2}]
-      }, options:_chartOpts
-    });
-
-    destroyChart('payMethod');
-    _charts.payMethod = new Chart(document.getElementById('chartPayMethod'),{
-      type:'doughnut', data:{
-        labels:['Cash','Card'],
-        datasets:[{data:[data.cash||0,data.card||0],backgroundColor:['rgba(109,191,103,0.5)','rgba(130,180,224,0.5)'],borderColor:['#6dbf67','#82b4e0'],borderWidth:1}]
-      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'rgba(245,242,236,0.4)',font:{size:10},padding:12}}}}
-    });
-
-    destroyChart('noShow');
-    _charts.noShow = new Chart(document.getElementById('chartNoShow'),{
-      type:'line', data:{
-        labels,
-        datasets:[{data:days.map(d=>d.no_show||0),borderColor:'#c49de0',backgroundColor:'rgba(196,157,224,0.08)',fill:true,tension:0.35,pointRadius:2}]
-      }, options:_chartOpts
-    });
-  }
 
   /* ══════════════════════════════════════
      RESERVATIONS LIST
