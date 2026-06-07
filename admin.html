@@ -447,7 +447,7 @@
             </div>
           </div>
           <div class="panel-controls">
-            <input type="date" id="anDate" onchange="loadAnalyticsView()">
+            <input type="date" id="anDate" onchange="loadAnalyticsView()" onclick="try{this.showPicker()}catch(e){}">
             <select id="anMonth" onchange="loadAnalyticsView()" style="display:none;"></select>
             <select id="anYear"  onchange="loadAnalyticsView()" style="display:none;"></select>
             <button class="btn-sm" onclick="downloadPDF()">↓ PDF</button>
@@ -461,8 +461,8 @@
           <button class="rf-btn" onclick="setReportRange('month',this)">This Month</button>
           <button class="rf-btn" onclick="setReportRange('prev',this)">Prev Month</button>
           <button class="rf-btn" onclick="setReportRange('custom',this)">Custom</button>
-          <input type="date" id="rfFrom" style="display:none;" onchange="loadAnalyticsView()">
-          <input type="date" id="rfTo"   style="display:none;" onchange="loadAnalyticsView()">
+          <input type="date" id="rfFrom" style="display:none;" onchange="loadAnalyticsView()" onclick="try{this.showPicker()}catch(e){}">
+          <input type="date" id="rfTo"   style="display:none;" onchange="loadAnalyticsView()" onclick="try{this.showPicker()}catch(e){}">
         </div>
 
         <!-- ── Daily view ── -->
@@ -586,7 +586,7 @@
 
       <div class="filters">
         <input type="text" id="filterSearch" class="filter-search" placeholder="Search name, email, phone, table…" oninput="debounceLoad()">
-        <input type="date" id="filterDate" onchange="loadReservations()">
+        <input type="date" id="filterDate" onchange="loadReservations()" onclick="try{this.showPicker()}catch(e){}">
         <select id="filterStatus" onchange="loadReservations()">
           <option value="">All statuses</option>
           <option value="pending">Pending</option>
