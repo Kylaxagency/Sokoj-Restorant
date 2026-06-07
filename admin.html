@@ -199,7 +199,8 @@
   .chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
   .chart-box {
     background: rgba(0,0,0,0.15); border: 1px solid var(--border);
-    padding: 0.75rem 0.75rem 0.5rem; min-height: 120px; max-height: 150px; position: relative; border-radius: var(--radius);
+    padding: 0.75rem 0.75rem 0.5rem; height: 140px; position: relative; border-radius: var(--radius);
+    overflow: hidden;
   }
   .chart-box h4 {
     font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
@@ -543,10 +544,10 @@
 
           <div class="subsection-label">Trends</div>
           <div class="chart-grid">
-            <div class="chart-box"><h4>Revenue Trend</h4><canvas id="chartRevenue"></canvas></div>
-            <div class="chart-box"><h4>Completed Reservations</h4><canvas id="chartCompleted"></canvas></div>
-            <div class="chart-box"><h4>Payment Method Distribution</h4><canvas id="chartPayMethod"></canvas></div>
-            <div class="chart-box"><h4>No-Show Trend</h4><canvas id="chartNoShow"></canvas></div>
+            <div class="chart-box"><h4>Revenue Trend</h4><canvas id="chartRevenue" height="100"></canvas></div>
+            <div class="chart-box"><h4>Completed Reservations</h4><canvas id="chartCompleted" height="100"></canvas></div>
+            <div class="chart-box"><h4>Payment Distribution</h4><canvas id="chartPayMethod" height="100"></canvas></div>
+            <div class="chart-box"><h4>No-Show Trend</h4><canvas id="chartNoShow" height="100"></canvas></div>
           </div>
 
           <div class="subsection-label">Daily Breakdown</div>
@@ -978,7 +979,7 @@
      CHARTS
   ══════════════════════════════════════ */
   const _chartOpts = {
-    responsive: true, maintainAspectRatio: false,
+    responsive: true, maintainAspectRatio: false, aspectRatio: 2,
     plugins: { legend: { display: false } },
     scales: {
       x: { ticks:{color:'rgba(245,242,236,0.2)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.02)'} },
