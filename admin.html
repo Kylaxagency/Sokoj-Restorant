@@ -132,12 +132,13 @@
   .panel-title { font-family: var(--serif); font-size: 1rem; font-weight: 400; color: var(--ivory); }
   .panel-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
   .panel-controls input, .panel-controls select {
-    padding: 0.38rem 0.7rem; background: rgba(255,255,255,0.04);
+    padding: 0.38rem 0.7rem; background: var(--charcoal);
     border: 1px solid rgba(245,242,236,0.1); color: var(--ivory);
     font-size: 0.75rem; outline: none; border-radius: var(--radius);
     transition: border-color 0.2s;
   }
   .panel-controls input:focus, .panel-controls select:focus { border-color: var(--copper); }
+  .panel-controls select option { background: var(--charcoal); color: var(--ivory); }
 
   /* ── Tabs ── */
   .tab-group { display: flex; gap: 0; border: 1px solid rgba(184,124,90,0.2); border-radius: var(--radius); overflow: hidden; }
@@ -771,7 +772,7 @@
   (function initPickers(){
     const now=new Date(), ms=document.getElementById('anMonth'), ys=document.getElementById('anYear');
     MONTHS.forEach((m,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=m;if(i===now.getMonth())o.selected=true;ms.appendChild(o);});
-    for(let y=now.getFullYear();y>=now.getFullYear()-3;y--){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o);}
+    for(let y=now.getFullYear()+15;y>=now.getFullYear()-3;y--){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o);}
   })();
 
   /* ══════════════════════════════════════
