@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "echo 'no build needed'",
-  "outputDirectory": ".",
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "admin.html", "use": "@vercel/static" },
+    { "src": "images/**", "use": "@vercel/static" }
+  ],
   "routes": [
-    { "src": "/(.*)", "dest": "/$1" }
+    { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/images/(.*)", "dest": "/images/$1" },
+    { "src": "/", "dest": "/index.html" }
   ]
 }
