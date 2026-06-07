@@ -196,10 +196,10 @@
   .pay-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
 
   /* ── Charts ── */
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
   .chart-box {
     background: rgba(0,0,0,0.15); border: 1px solid var(--border);
-    padding: 1rem 1rem 0.75rem; min-height: 210px; position: relative; border-radius: var(--radius);
+    padding: 0.75rem 0.75rem 0.5rem; min-height: 120px; max-height: 150px; position: relative; border-radius: var(--radius);
   }
   .chart-box h4 {
     font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
@@ -384,7 +384,7 @@
   /* ── Responsive ── */
   @media (max-width: 1100px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
-    .chart-grid { grid-template-columns: 1fr; }
+    .chart-grid { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 768px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
