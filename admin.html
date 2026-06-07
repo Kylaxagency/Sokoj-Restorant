@@ -13,8 +13,10 @@
   :root {
     --copper: #b87c5a;
     --copper-light: #d4a082;
+    --copper-dim: rgba(184,124,90,0.12);
     --warm-black: #111110;
     --charcoal: #1a1a18;
+    --charcoal-light: #222220;
     --stone: #6b6860;
     --ivory: #f5f2ec;
     --cream: #ede9e0;
@@ -24,6 +26,12 @@
     --blue: #82b4e0;
     --red: #e07070;
     --purple: #c49de0;
+    --border: rgba(184,124,90,0.12);
+    --border-subtle: rgba(255,255,255,0.04);
+    --text-dim: rgba(245,242,236,0.35);
+    --text-muted: rgba(245,242,236,0.5);
+    --radius: 6px;
+    --radius-lg: 10px;
   }
   body { font-family: var(--sans); background: var(--warm-black); color: var(--ivory); min-height: 100vh; }
 
@@ -31,20 +39,21 @@
   #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
   .login-box {
     background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.2);
-    padding: 3rem 2.5rem; width: 360px; text-align: center;
+    padding: 3rem 2.5rem; width: 380px; text-align: center; border-radius: var(--radius-lg);
   }
-  .login-box h1 { font-family: var(--serif); font-size: 1.6rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.4rem; }
-  .login-box p  { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--copper); margin-bottom: 2rem; }
+  .login-box h1 { font-family: var(--serif); font-size: 1.8rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.3rem; letter-spacing: 0.04em; }
+  .login-box p  { font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--copper); margin-bottom: 2.5rem; }
   .login-box input {
-    width: 100%; padding: 0.85rem 1rem; background: rgba(255,255,255,0.04);
-    border: 0.5px solid rgba(245,242,236,0.15); color: var(--ivory);
-    font-size: 0.9rem; margin-bottom: 1rem; outline: none;
+    width: 100%; padding: 0.9rem 1rem; background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
+    font-size: 0.85rem; margin-bottom: 0.75rem; outline: none; border-radius: var(--radius);
+    transition: border-color 0.2s;
   }
   .login-box input:focus { border-color: var(--copper); }
   .btn-copper {
-    width: 100%; padding: 0.9rem; background: var(--copper); color: #fff;
-    border: none; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase;
-    cursor: pointer; transition: background 0.2s;
+    width: 100%; padding: 0.95rem; background: var(--copper); color: #fff;
+    border: none; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+    cursor: pointer; transition: background 0.2s; border-radius: var(--radius); margin-top: 0.5rem;
   }
   .btn-copper:hover { background: var(--copper-light); }
   .login-error { color: #e07070; font-size: 0.8rem; margin-top: 0.75rem; min-height: 1.2em; }
@@ -52,264 +61,337 @@
   /* ── DASHBOARD ── */
   #dashboard { display: none; }
   header {
-    background: var(--charcoal); border-bottom: 0.5px solid rgba(184,124,90,0.2);
-    padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+    background: var(--charcoal); border-bottom: 1px solid var(--border);
+    padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 100;
   }
-  header h1 { font-family: var(--serif); font-size: 1.2rem; font-weight: 300; }
+  header h1 { font-family: var(--serif); font-size: 1.15rem; font-weight: 300; letter-spacing: 0.02em; }
   header h1 span { color: var(--copper); }
   .header-right { display: flex; align-items: center; gap: 1rem; }
-  .badge-live { background: #2d6a4f; color: #95d5b2; font-size: 0.65rem; letter-spacing: 0.15em; padding: 0.3rem 0.7rem; border-radius: 20px; text-transform: uppercase; }
-  .admin-email { font-size: 0.7rem; color: rgba(245,242,236,0.4); letter-spacing: 0.05em; }
-  .btn-logout { background: none; border: 0.5px solid rgba(245,242,236,0.2); color: rgba(245,242,236,0.5); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.4rem 0.9rem; cursor: pointer; }
-  .btn-logout:hover { border-color: var(--copper); color: var(--copper); }
-  .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-
-  /* KPI Cards */
-  .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
-  .kpi {
-    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.12);
-    padding: 1.2rem 0.8rem; text-align: center;
+  .badge-live {
+    background: #1a3d2b; color: #95d5b2; font-size: 0.6rem; letter-spacing: 0.15em;
+    padding: 0.3rem 0.75rem; border-radius: 20px; text-transform: uppercase; font-weight: 500;
   }
-  .kpi .kpi-num { font-family: var(--serif); font-size: 1.6rem; font-weight: 300; }
-  .kpi .kpi-lbl { font-size: 0.55rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(245,242,236,0.35); margin-top: 0.2rem; }
+  .admin-email { font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.03em; }
+  .btn-logout {
+    background: none; border: 0.5px solid rgba(245,242,236,0.15); color: var(--text-muted);
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.4rem 0.9rem; cursor: pointer; border-radius: var(--radius); transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--copper); color: var(--copper); }
+  .main { padding: 1.5rem 2rem 3rem; max-width: 1440px; margin: 0 auto; }
+
+  /* ── Section dividers ── */
+  .section { margin-bottom: 2rem; }
+  .section-header {
+    display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;
+    padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-family: var(--serif); font-size: 0.95rem; font-weight: 400;
+    color: var(--ivory); letter-spacing: 0.02em;
+  }
+  .section-badge {
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--copper); background: rgba(184,124,90,0.08);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+  .section-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+
+  /* ── KPI Cards ── */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.6rem;
+  }
+  .kpi {
+    background: var(--charcoal); border: 1px solid var(--border);
+    padding: 1.1rem 0.6rem; text-align: center; border-radius: var(--radius);
+    transition: border-color 0.2s;
+  }
+  .kpi:hover { border-color: rgba(184,124,90,0.25); }
+  .kpi .kpi-num { font-family: var(--serif); font-size: 1.5rem; font-weight: 300; line-height: 1.2; }
+  .kpi .kpi-lbl {
+    font-size: 0.52rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-dim); margin-top: 0.35rem; line-height: 1.3;
+  }
   .kpi-revenue .kpi-num { color: var(--green); }
   .kpi-copper  .kpi-num { color: var(--copper); }
   .kpi-noshow  .kpi-num { color: var(--purple); }
 
-  /* Section panels */
+  /* ── Panel (card container) ── */
   .panel {
-    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.12);
-    padding: 1.5rem; margin-bottom: 1.5rem;
+    background: var(--charcoal); border: 1px solid var(--border);
+    padding: 1.5rem; border-radius: var(--radius-lg);
   }
   .panel-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.75rem;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;
   }
-  .panel-title { font-family: var(--serif); font-size: 1rem; font-weight: 300; color: var(--ivory); }
+  .panel-header-left { display: flex; align-items: center; gap: 0.75rem; }
+  .panel-title { font-family: var(--serif); font-size: 1rem; font-weight: 400; color: var(--ivory); }
   .panel-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
   .panel-controls input, .panel-controls select {
-    padding: 0.35rem 0.7rem; background: rgba(255,255,255,0.04);
-    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
-    font-size: 0.75rem; outline: none;
+    padding: 0.38rem 0.7rem; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(245,242,236,0.1); color: var(--ivory);
+    font-size: 0.75rem; outline: none; border-radius: var(--radius);
+    transition: border-color 0.2s;
   }
   .panel-controls input:focus, .panel-controls select:focus { border-color: var(--copper); }
 
-  /* Tabs + buttons */
-  .tab-group { display: flex; gap: 0; border: 0.5px solid rgba(184,124,90,0.2); }
+  /* ── Tabs ── */
+  .tab-group { display: flex; gap: 0; border: 1px solid rgba(184,124,90,0.2); border-radius: var(--radius); overflow: hidden; }
   .tab-btn {
-    padding: 0.3rem 0.9rem; background: none; border: none;
-    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: rgba(245,242,236,0.4); cursor: pointer; transition: all 0.15s;
-  }
-  .tab-btn.active, .tab-btn:hover { background: rgba(184,124,90,0.12); color: var(--copper); }
-  .btn-sm {
-    padding: 0.35rem 0.8rem; background: none;
-    border: 0.5px solid rgba(184,124,90,0.4); color: var(--copper);
+    padding: 0.35rem 1rem; background: none; border: none;
     font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
-    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+  }
+  .tab-btn.active { background: rgba(184,124,90,0.15); color: var(--copper); font-weight: 500; }
+  .tab-btn:hover:not(.active) { background: rgba(184,124,90,0.06); color: var(--copper); }
+
+  .btn-sm {
+    padding: 0.38rem 0.85rem; background: none;
+    border: 1px solid rgba(184,124,90,0.35); color: var(--copper);
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s; border-radius: var(--radius);
   }
   .btn-sm:hover { background: rgba(184,124,90,0.1); }
 
-  /* Analytics stat grid */
-  .an-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
-  .an-stat { text-align: center; padding: 0.8rem 0.4rem; }
-  .an-val { font-family: var(--serif); font-size: 1.5rem; font-weight: 300; color: var(--copper); }
-  .an-lbl { font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245,242,236,0.3); margin-top: 0.15rem; }
+  /* ── Analytics stat grid ── */
+  .an-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem; margin-bottom: 1.25rem;
+  }
+  .an-stat {
+    text-align: center; padding: 0.9rem 0.5rem;
+    background: rgba(0,0,0,0.2); border-radius: var(--radius);
+    border: 1px solid var(--border-subtle);
+  }
+  .an-val { font-family: var(--serif); font-size: 1.4rem; font-weight: 300; color: var(--copper); line-height: 1.2; }
+  .an-lbl { font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-top: 0.25rem; }
   .an-val.green  { color: var(--green); }
   .an-val.blue   { color: var(--blue); }
   .an-val.purple { color: var(--purple); }
   .an-val.red    { color: var(--red); }
 
-  /* Payment breakdown */
-  .pay-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  /* ── Subsection labels ── */
+  .subsection-label {
+    font-size: 0.55rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--copper); opacity: 0.6; margin: 1.5rem 0 0.75rem;
+    padding-bottom: 0.4rem; border-bottom: 1px solid rgba(184,124,90,0.08);
+  }
+
+  /* ── Payment breakdown ── */
+  .pay-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
   .pay-card {
-    border: 0.5px solid rgba(184,124,90,0.1); padding: 1rem; text-align: center;
+    border: 1px solid var(--border); padding: 1.1rem; text-align: center;
+    border-radius: var(--radius); background: rgba(0,0,0,0.1);
   }
   .pay-card h4 {
     font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: rgba(245,242,236,0.35); margin-bottom: 0.6rem;
+    color: var(--text-dim); margin-bottom: 0.5rem; font-weight: 400;
   }
-  .pay-card .pay-big { font-family: var(--serif); font-size: 1.8rem; font-weight: 300; }
-  .pay-card .pay-detail { font-size: 0.7rem; color: rgba(245,242,236,0.35); margin-top: 0.3rem; }
-  .pay-card .pay-pct { font-size: 0.65rem; letter-spacing: 0.1em; margin-top: 0.3rem; }
-  .pay-bar { height: 4px; border-radius: 2px; margin-top: 0.5rem; background: rgba(255,255,255,0.05); }
+  .pay-card .pay-big { font-family: var(--serif); font-size: 1.6rem; font-weight: 300; }
+  .pay-card .pay-detail { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.3rem; }
+  .pay-card .pay-pct { font-size: 0.65rem; letter-spacing: 0.1em; margin-top: 0.25rem; font-weight: 500; }
+  .pay-bar { height: 3px; border-radius: 2px; margin-top: 0.5rem; background: rgba(255,255,255,0.04); }
   .pay-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
 
-  /* Charts */
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
-  .chart-box { background: rgba(0,0,0,0.15); border: 0.5px solid rgba(184,124,90,0.08); padding: 1rem; min-height: 200px; position: relative; }
+  /* ── Charts ── */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .chart-box {
+    background: rgba(0,0,0,0.15); border: 1px solid var(--border);
+    padding: 1rem 1rem 0.75rem; min-height: 210px; position: relative; border-radius: var(--radius);
+  }
   .chart-box h4 {
-    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: rgba(245,242,236,0.3); margin-bottom: 0.8rem;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 0.75rem; font-weight: 400;
   }
 
-  /* Completed transactions table */
-  .tx-wrap { overflow-x: auto; margin-top: 1rem; }
+  /* ── Tables (transaction records, daily breakdown) ── */
+  .tx-wrap { overflow-x: auto; }
   .tx-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
   .tx-table thead th {
-    text-align: left; padding: 0.55rem 0.7rem;
-    font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase;
-    color: rgba(245,242,236,0.28); border-bottom: 0.5px solid rgba(184,124,90,0.12);
+    text-align: left; padding: 0.6rem 0.75rem;
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
   }
-  .tx-table tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.03); }
+  .tx-table thead th:first-child { border-radius: var(--radius) 0 0 0; }
+  .tx-table thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+  .tx-table tbody tr { border-bottom: 1px solid var(--border-subtle); }
   .tx-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-  .tx-table tbody td { padding: 0.5rem 0.7rem; color: rgba(245,242,236,0.7); }
-  .tx-total td { border-top: 0.5px solid rgba(184,124,90,0.2); color: var(--copper); font-weight: 500; }
+  .tx-table tbody td { padding: 0.55rem 0.75rem; color: rgba(245,242,236,0.7); }
+  .tx-total td { border-top: 1px solid rgba(184,124,90,0.2); color: var(--copper); font-weight: 500; }
 
-  /* Report filter pills */
-  .report-filters { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  /* ── Report filter pills ── */
+  .report-filters { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
   .rf-btn {
     padding: 0.3rem 0.8rem; background: none;
-    border: 0.5px solid rgba(245,242,236,0.1); color: rgba(245,242,236,0.4);
-    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer;
+    border: 1px solid rgba(245,242,236,0.08); color: var(--text-muted);
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; border-radius: var(--radius); transition: all 0.15s;
   }
   .rf-btn.active, .rf-btn:hover { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.06); }
 
-  /* Reservations list (existing) */
-  .quick-filters { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  /* ── Reservations management ── */
+  .quick-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .qf-btn {
-    padding: 0.4rem 1rem; background: none;
-    border: 0.5px solid rgba(245,242,236,0.12); color: rgba(245,242,236,0.5);
-    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer;
+    padding: 0.4rem 0.9rem; background: none;
+    border: 1px solid rgba(245,242,236,0.08); color: var(--text-muted);
+    font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer; border-radius: var(--radius); transition: all 0.15s;
   }
-  .qf-btn:hover, .qf-btn.active { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.08); }
-  .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+  .qf-btn:hover, .qf-btn.active { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.06); }
+
+  .filters {
+    display: flex; gap: 0.75rem; margin: 0.75rem 0 1.25rem; flex-wrap: wrap; align-items: center;
+  }
   .filters input, .filters select {
-    padding: 0.6rem 0.9rem; background: var(--charcoal);
-    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
-    font-size: 0.8rem; outline: none;
+    padding: 0.55rem 0.85rem; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(245,242,236,0.08); color: var(--ivory);
+    font-size: 0.8rem; outline: none; border-radius: var(--radius);
+    transition: border-color 0.2s;
   }
   .filters input:focus, .filters select:focus { border-color: var(--copper); }
   .filter-search { flex: 1; min-width: 200px; }
   .filter-btn {
-    padding: 0.6rem 1.2rem; background: none;
-    border: 0.5px solid rgba(184,124,90,0.5); color: var(--copper);
-    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+    padding: 0.55rem 1.1rem; background: none;
+    border: 1px solid rgba(184,124,90,0.35); color: var(--copper);
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; border-radius: var(--radius); transition: all 0.15s;
   }
-  .filter-btn:hover { background: rgba(184,124,90,0.1); }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  thead th {
-    text-align: left; padding: 0.75rem 1rem;
-    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
-    color: rgba(245,242,236,0.35); border-bottom: 0.5px solid rgba(184,124,90,0.15);
-  }
-  tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.04); transition: background 0.15s; }
-  tbody tr:hover { background: rgba(255,255,255,0.025); }
-  tbody td { padding: 0.9rem 1rem; color: rgba(245,242,236,0.85); }
-  tbody td.muted { color: rgba(245,242,236,0.35); font-size: 0.8rem; }
-  .status {
-    display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px;
-    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
-  }
-  .status-pending   { background: rgba(180,140,60,0.15); color: #d4b060; border: 0.5px solid rgba(180,140,60,0.3); }
-  .status-confirmed { background: rgba(45,106,79,0.2);   color: #95d5b2; border: 0.5px solid rgba(45,106,79,0.4); }
-  .status-cancelled { background: rgba(180,60,60,0.15);  color: #e07070; border: 0.5px solid rgba(180,60,60,0.3); }
-  .status-completed { background: rgba(100,100,100,0.15);color: #aaa;    border: 0.5px solid rgba(100,100,100,0.3); }
-  .status-no_show   { background: rgba(120,60,180,0.15); color: #c49de0; border: 0.5px solid rgba(120,60,180,0.3); }
-  .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-  .act-btn {
-    padding: 0.3rem 0.65rem; font-size: 0.65rem; letter-spacing: 0.1em;
-    text-transform: uppercase; border: 0.5px solid; cursor: pointer; background: none;
-  }
-  .act-confirm  { border-color: rgba(45,106,79,0.5);  color: #95d5b2; }
-  .act-confirm:hover  { background: rgba(45,106,79,0.15); }
-  .act-cancel   { border-color: rgba(180,60,60,0.4);  color: #e07070; }
-  .act-cancel:hover   { background: rgba(180,60,60,0.1); }
-  .act-complete { border-color: rgba(184,124,90,0.4); color: var(--copper); }
-  .act-complete:hover { background: rgba(184,124,90,0.1); }
-  .act-noshow   { border-color: rgba(120,60,180,0.4); color: #c49de0; }
-  .act-noshow:hover   { background: rgba(120,60,180,0.1); }
-  .act-delete   { border-color: rgba(255,255,255,0.1); color: rgba(245,242,236,0.3); }
-  .act-delete:hover   { border-color: rgba(180,60,60,0.4); color: #e07070; }
-  .empty-state { text-align: center; padding: 4rem; color: rgba(245,242,236,0.2); font-style: italic; }
+  .filter-btn:hover { background: rgba(184,124,90,0.08); }
 
-  /* Detail modal */
-  .detail-overlay {
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  table.res-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .res-table thead th {
+    text-align: left; padding: 0.7rem 1rem;
+    font-size: 0.55rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .res-table thead th:first-child { border-radius: var(--radius) 0 0 0; }
+  .res-table thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+  .res-table tbody tr { border-bottom: 1px solid var(--border-subtle); transition: background 0.15s; }
+  .res-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .res-table tbody td { padding: 0.75rem 1rem; color: rgba(245,242,236,0.85); }
+  .res-table tbody td.muted { color: var(--text-dim); font-size: 0.75rem; }
+
+  .status {
+    display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px;
+    font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500;
+  }
+  .status-pending   { background: rgba(180,140,60,0.12); color: #d4b060; border: 1px solid rgba(180,140,60,0.25); }
+  .status-confirmed { background: rgba(45,106,79,0.15);  color: #95d5b2; border: 1px solid rgba(45,106,79,0.3); }
+  .status-cancelled { background: rgba(180,60,60,0.12);  color: #e07070; border: 1px solid rgba(180,60,60,0.25); }
+  .status-completed { background: rgba(100,100,100,0.12);color: #aaa;    border: 1px solid rgba(100,100,100,0.25); }
+  .status-no_show   { background: rgba(120,60,180,0.12); color: #c49de0; border: 1px solid rgba(120,60,180,0.25); }
+
+  .actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .act-btn {
+    padding: 0.28rem 0.6rem; font-size: 0.6rem; letter-spacing: 0.08em;
+    text-transform: uppercase; border: 1px solid; cursor: pointer;
+    background: none; border-radius: 3px; transition: all 0.15s;
+  }
+  .act-confirm  { border-color: rgba(45,106,79,0.4);  color: #95d5b2; }
+  .act-confirm:hover  { background: rgba(45,106,79,0.12); }
+  .act-cancel   { border-color: rgba(180,60,60,0.3);  color: #e07070; }
+  .act-cancel:hover   { background: rgba(180,60,60,0.08); }
+  .act-complete { border-color: rgba(184,124,90,0.35); color: var(--copper); }
+  .act-complete:hover { background: rgba(184,124,90,0.08); }
+  .act-noshow   { border-color: rgba(120,60,180,0.3); color: #c49de0; }
+  .act-noshow:hover   { background: rgba(120,60,180,0.08); }
+  .act-delete   { border-color: rgba(255,255,255,0.08); color: rgba(245,242,236,0.25); }
+  .act-delete:hover   { border-color: rgba(180,60,60,0.3); color: #e07070; }
+  .empty-state { text-align: center; padding: 4rem; color: var(--text-dim); font-style: italic; }
+
+  /* ── Modals ── */
+  .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
     z-index: 200; align-items: center; justify-content: center;
   }
-  .detail-overlay.open { display: flex; }
-  .detail-box {
-    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.25);
-    padding: 2rem; width: 460px; max-width: 95vw; position: relative;
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--charcoal); border: 1px solid rgba(184,124,90,0.2);
+    padding: 2rem; max-width: 95vw; position: relative; border-radius: var(--radius-lg);
   }
-  .detail-box h3 { font-family: var(--serif); font-size: 1.3rem; font-weight: 300; margin-bottom: 1.5rem; color: var(--ivory); }
-  .detail-row { display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-  .detail-row .k { color: rgba(245,242,236,0.4); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; }
+
+  /* Detail modal */
+  .detail-box { width: 460px; }
+  .detail-box h3 { font-family: var(--serif); font-size: 1.2rem; font-weight: 300; margin-bottom: 1.5rem; color: var(--ivory); }
+  .detail-row {
+    display: flex; justify-content: space-between; padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border-subtle); font-size: 0.85rem;
+  }
+  .detail-row .k { color: var(--text-dim); font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; }
   .detail-row .v { color: var(--ivory); }
-  .detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: rgba(245,242,236,0.4); font-size: 1.2rem; cursor: pointer; }
+  .detail-close {
+    position: absolute; top: 1rem; right: 1.2rem; background: none; border: none;
+    color: var(--text-muted); font-size: 1.1rem; cursor: pointer; transition: color 0.15s;
+  }
   .detail-close:hover { color: var(--copper); }
 
   /* Payment modal */
-  .pay-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-    z-index: 300; align-items: center; justify-content: center;
-  }
-  .pay-overlay.open { display: flex; }
-  .pay-box {
-    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.3);
-    padding: 2rem; width: 400px; max-width: 95vw;
-  }
-  .pay-box h3 { font-family: var(--serif); font-size: 1.2rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.4rem; }
-  .pay-box p  { font-size: 0.75rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; }
-  .pay-methods { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .pay-box { width: 400px; border-color: rgba(184,124,90,0.3); }
+  .pay-box h3 { font-family: var(--serif); font-size: 1.15rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.3rem; }
+  .pay-box p  { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 1.5rem; }
+  .pay-methods { display: flex; gap: 0.6rem; margin-bottom: 1.25rem; }
   .pay-method-btn {
-    flex: 1; padding: 0.9rem; background: none;
-    border: 0.5px solid rgba(245,242,236,0.15); color: rgba(245,242,236,0.5);
-    font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+    flex: 1; padding: 0.85rem; background: none;
+    border: 1px solid rgba(245,242,236,0.1); color: var(--text-muted);
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; border-radius: var(--radius); transition: all 0.15s;
   }
-  .pay-method-btn.active { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.1); }
-  .pay-amount-wrap { position: relative; margin-bottom: 1.5rem; }
+  .pay-method-btn.active { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.08); }
+  .pay-amount-wrap { position: relative; margin-bottom: 1.25rem; }
   .pay-amount-wrap label {
-    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: rgba(245,242,236,0.4); margin-bottom: 0.5rem; display: block;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 0.4rem; display: block;
   }
   .pay-amount-wrap input {
     width: 100%; padding: 0.85rem 3.5rem 0.85rem 1rem;
-    background: rgba(255,255,255,0.04); border: 0.5px solid rgba(245,242,236,0.15);
-    color: var(--ivory); font-size: 1.1rem; outline: none;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(245,242,236,0.1);
+    color: var(--ivory); font-size: 1.05rem; outline: none; border-radius: var(--radius);
   }
   .pay-amount-wrap input:focus { border-color: var(--copper); }
   .pay-amount-wrap span {
-    position: absolute; right: 1rem; bottom: 0.85rem;
-    font-size: 0.75rem; color: rgba(245,242,236,0.35);
+    position: absolute; right: 1rem; bottom: 0.88rem;
+    font-size: 0.75rem; color: var(--text-dim);
   }
-  .pay-actions { display: flex; gap: 0.75rem; }
+  .pay-actions { display: flex; gap: 0.6rem; }
   .pay-actions button {
-    flex: 1; padding: 0.85rem; font-size: 0.7rem; letter-spacing: 0.2em;
-    text-transform: uppercase; border: 0.5px solid; cursor: pointer;
+    flex: 1; padding: 0.8rem; font-size: 0.65rem; letter-spacing: 0.18em;
+    text-transform: uppercase; border: 1px solid; cursor: pointer; border-radius: var(--radius);
   }
-  .pay-btn-cancel  { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.4); }
-  .pay-btn-cancel:hover  { border-color: rgba(245,242,236,0.3); color: var(--ivory); }
+  .pay-btn-cancel  { background: none; border-color: rgba(245,242,236,0.1); color: var(--text-muted); }
+  .pay-btn-cancel:hover  { border-color: rgba(245,242,236,0.25); color: var(--ivory); }
   .pay-btn-confirm { background: var(--copper); border-color: var(--copper); color: #fff; }
   .pay-btn-confirm:hover { background: var(--copper-light); }
 
   /* Cancel modal */
-  .cancel-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-    z-index: 300; align-items: center; justify-content: center;
-  }
-  .cancel-overlay.open { display: flex; }
-  .cancel-box {
-    background: var(--charcoal); border: 0.5px solid rgba(180,60,60,0.4);
-    padding: 2rem; width: 380px; max-width: 95vw; text-align: center;
-  }
-  .cancel-box .cancel-icon { font-size: 2rem; margin-bottom: 1rem; }
-  .cancel-box h3 { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.5rem; }
-  .cancel-box p  { font-size: 0.8rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; }
-  .cancel-actions { display: flex; gap: 0.75rem; }
+  .cancel-box { width: 380px; border-color: rgba(180,60,60,0.3); text-align: center; }
+  .cancel-box .cancel-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+  .cancel-box h3 { font-family: var(--serif); font-size: 1.05rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.4rem; }
+  .cancel-box p  { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 1.5rem; }
+  .cancel-actions { display: flex; gap: 0.6rem; }
   .cancel-actions button {
-    flex: 1; padding: 0.8rem; font-size: 0.7rem; letter-spacing: 0.2em;
-    text-transform: uppercase; border: 0.5px solid; cursor: pointer;
+    flex: 1; padding: 0.75rem; font-size: 0.65rem; letter-spacing: 0.18em;
+    text-transform: uppercase; border: 1px solid; cursor: pointer; border-radius: var(--radius);
   }
-  .cancel-btn-back    { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.5); }
-  .cancel-btn-confirm { background: rgba(180,60,60,0.2); border-color: rgba(180,60,60,0.5); color: #e07070; }
-  .cancel-btn-confirm:hover { background: rgba(180,60,60,0.3); }
+  .cancel-btn-back    { background: none; border-color: rgba(245,242,236,0.1); color: var(--text-muted); }
+  .cancel-btn-confirm { background: rgba(180,60,60,0.15); border-color: rgba(180,60,60,0.4); color: #e07070; }
+  .cancel-btn-confirm:hover { background: rgba(180,60,60,0.25); }
 
-  @media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } .chart-grid { grid-template-columns: 1fr; } }
-  @media (max-width: 768px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .main { padding: 1rem; } .pay-breakdown { grid-template-columns: 1fr; } }
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 1rem; }
+    .pay-breakdown { grid-template-columns: 1fr; }
+    .an-grid { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
@@ -339,175 +421,210 @@
 
   <div class="main">
 
-    <!-- ═══ KPI Cards ═══ -->
-    <div class="kpi-grid">
-      <div class="kpi kpi-revenue"><div class="kpi-num" id="kpiRevToday">—</div><div class="kpi-lbl">Revenue Today</div></div>
-      <div class="kpi kpi-revenue"><div class="kpi-num" id="kpiRevMonth">—</div><div class="kpi-lbl">Revenue This Month</div></div>
-      <div class="kpi kpi-copper"><div class="kpi-num" id="kpiCompToday">—</div><div class="kpi-lbl">Completed Today</div></div>
-      <div class="kpi kpi-copper"><div class="kpi-num" id="kpiCompMonth">—</div><div class="kpi-lbl">Completed Month</div></div>
-      <div class="kpi kpi-noshow"><div class="kpi-num" id="kpiNoShow">—</div><div class="kpi-lbl">No-Shows Month</div></div>
-      <div class="kpi kpi-copper"><div class="kpi-num" id="kpiAvgSpend">—</div><div class="kpi-lbl">Avg Spend / Res.</div></div>
-    </div>
-
-    <!-- ═══ Analytics Panel ═══ -->
-    <div class="panel">
-      <div class="panel-header">
-        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-          <span class="panel-title">Analytics</span>
-          <div class="tab-group">
-            <button class="tab-btn active" id="tabDaily"   onclick="switchTab('daily')">Daily</button>
-            <button class="tab-btn"        id="tabMonthly" onclick="switchTab('monthly')">Monthly</button>
-          </div>
-        </div>
-        <div class="panel-controls">
-          <input type="date" id="anDate" onchange="loadAnalyticsView()">
-          <select id="anMonth" onchange="loadAnalyticsView()" style="display:none;"></select>
-          <select id="anYear"  onchange="loadAnalyticsView()" style="display:none;"></select>
-          <button class="btn-sm" onclick="downloadPDF()">↓ PDF</button>
-        </div>
+    <!-- ═══════════════════════════════════
+         SECTION 1: OVERVIEW KPI CARDS
+    ═══════════════════════════════════ -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Overview</span>
+        <span class="section-badge">Live</span>
       </div>
-
-      <!-- Report filter pills -->
-      <div class="report-filters" id="reportFilters" style="display:none;">
-        <button class="rf-btn active" onclick="setReportRange('today',this)">Today</button>
-        <button class="rf-btn" onclick="setReportRange('7d',this)">Last 7 Days</button>
-        <button class="rf-btn" onclick="setReportRange('month',this)">This Month</button>
-        <button class="rf-btn" onclick="setReportRange('prev',this)">Prev Month</button>
-        <button class="rf-btn" onclick="setReportRange('custom',this)">Custom</button>
-        <input type="date" id="rfFrom" style="display:none;" onchange="loadAnalyticsView()">
-        <input type="date" id="rfTo"   style="display:none;" onchange="loadAnalyticsView()">
-      </div>
-
-      <!-- Daily view -->
-      <div id="viewDaily">
-        <div class="an-grid">
-          <div class="an-stat"><div class="an-val" id="dCompleted">—</div><div class="an-lbl">Completed</div></div>
-          <div class="an-stat"><div class="an-val green" id="dRevenue">—</div><div class="an-lbl">Total Revenue</div></div>
-          <div class="an-stat"><div class="an-val green" id="dCash">—</div><div class="an-lbl">Cash Revenue</div></div>
-          <div class="an-stat"><div class="an-val blue" id="dCard">—</div><div class="an-lbl">Card Revenue</div></div>
-          <div class="an-stat"><div class="an-val" id="dAvg">—</div><div class="an-lbl">Avg Spend</div></div>
-          <div class="an-stat"><div class="an-val purple" id="dNoShow">—</div><div class="an-lbl">No-Shows</div></div>
-          <div class="an-stat"><div class="an-val red" id="dCancelled">—</div><div class="an-lbl">Cancelled</div></div>
-        </div>
-        <div class="pay-breakdown">
-          <div class="pay-card">
-            <h4>💵 Cash</h4>
-            <div class="pay-big green" id="dCashAmt">0</div>
-            <div class="pay-detail"><span id="dCashCount">0</span> reservations</div>
-            <div class="pay-pct" id="dCashPct" style="color:var(--green);">0%</div>
-            <div class="pay-bar"><div class="pay-bar-fill" id="dCashBar" style="width:0%;background:var(--green);"></div></div>
-          </div>
-          <div class="pay-card">
-            <h4>💳 Card</h4>
-            <div class="pay-big blue" id="dCardAmt">0</div>
-            <div class="pay-detail"><span id="dCardCount">0</span> reservations</div>
-            <div class="pay-pct" id="dCardPct" style="color:var(--blue);">0%</div>
-            <div class="pay-bar"><div class="pay-bar-fill" id="dCardBar" style="width:0%;background:var(--blue);"></div></div>
-          </div>
-        </div>
-        <div class="tx-wrap" id="dTxWrap" style="display:none;">
-          <div style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.5);margin:1.2rem 0 0.6rem;">Transaction Records</div>
-          <table class="tx-table"><thead><tr>
-            <th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
-          </tr></thead><tbody id="dTxBody"></tbody></table>
-        </div>
-      </div>
-
-      <!-- Monthly view -->
-      <div id="viewMonthly" style="display:none;">
-        <div class="an-grid">
-          <div class="an-stat"><div class="an-val" id="mCompleted">—</div><div class="an-lbl">Completed</div></div>
-          <div class="an-stat"><div class="an-val green" id="mRevenue">—</div><div class="an-lbl">Total Revenue</div></div>
-          <div class="an-stat"><div class="an-val green" id="mCash">—</div><div class="an-lbl">Cash Revenue</div></div>
-          <div class="an-stat"><div class="an-val blue" id="mCard">—</div><div class="an-lbl">Card Revenue</div></div>
-          <div class="an-stat"><div class="an-val" id="mAvg">—</div><div class="an-lbl">Avg Spend</div></div>
-          <div class="an-stat"><div class="an-val purple" id="mNoShow">—</div><div class="an-lbl">No-Shows</div></div>
-          <div class="an-stat"><div class="an-val red" id="mCancelled">—</div><div class="an-lbl">Cancelled</div></div>
-        </div>
-        <div class="pay-breakdown">
-          <div class="pay-card">
-            <h4>💵 Cash</h4>
-            <div class="pay-big green" id="mCashAmt">0</div>
-            <div class="pay-detail"><span id="mCashCount">0</span> reservations</div>
-            <div class="pay-pct" id="mCashPct" style="color:var(--green);">0%</div>
-            <div class="pay-bar"><div class="pay-bar-fill" id="mCashBar" style="width:0%;background:var(--green);"></div></div>
-          </div>
-          <div class="pay-card">
-            <h4>💳 Card</h4>
-            <div class="pay-big blue" id="mCardAmt">0</div>
-            <div class="pay-detail"><span id="mCardCount">0</span> reservations</div>
-            <div class="pay-pct" id="mCardPct" style="color:var(--blue);">0%</div>
-            <div class="pay-bar"><div class="pay-bar-fill" id="mCardBar" style="width:0%;background:var(--blue);"></div></div>
-          </div>
-        </div>
-        <!-- Charts -->
-        <div class="chart-grid">
-          <div class="chart-box"><h4>Revenue Trend</h4><canvas id="chartRevenue"></canvas></div>
-          <div class="chart-box"><h4>Completed Reservations</h4><canvas id="chartCompleted"></canvas></div>
-          <div class="chart-box"><h4>Payment Method Distribution</h4><canvas id="chartPayMethod"></canvas></div>
-          <div class="chart-box"><h4>No-Show Trend</h4><canvas id="chartNoShow"></canvas></div>
-        </div>
-        <!-- Day breakdown table -->
-        <div class="tx-wrap" style="margin-top:1.5rem;">
-          <div style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.5);margin-bottom:0.6rem;">Daily Breakdown</div>
-          <table class="tx-table"><thead><tr>
-            <th>Date</th><th>Completed</th><th>Revenue</th><th>Cash</th><th>Card</th><th>No Show</th><th>Cancelled</th>
-          </tr></thead><tbody id="mDayBody"></tbody></table>
-        </div>
-        <!-- Transaction records -->
-        <div class="tx-wrap" id="mTxWrap" style="display:none;">
-          <div style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.5);margin:1.2rem 0 0.6rem;">Transaction Records</div>
-          <table class="tx-table"><thead><tr>
-            <th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
-          </tr></thead><tbody id="mTxBody"></tbody></table>
-        </div>
+      <div class="kpi-grid">
+        <div class="kpi kpi-revenue"><div class="kpi-num" id="kpiRevToday">—</div><div class="kpi-lbl">Revenue Today</div></div>
+        <div class="kpi kpi-revenue"><div class="kpi-num" id="kpiRevMonth">—</div><div class="kpi-lbl">Revenue This Month</div></div>
+        <div class="kpi kpi-copper"><div class="kpi-num" id="kpiCompToday">—</div><div class="kpi-lbl">Completed Today</div></div>
+        <div class="kpi kpi-copper"><div class="kpi-num" id="kpiCompMonth">—</div><div class="kpi-lbl">Completed Month</div></div>
+        <div class="kpi kpi-noshow"><div class="kpi-num" id="kpiNoShow">—</div><div class="kpi-lbl">No-Shows Month</div></div>
+        <div class="kpi kpi-copper"><div class="kpi-num" id="kpiAvgSpend">—</div><div class="kpi-lbl">Avg Spend / Res.</div></div>
       </div>
     </div>
 
-    <!-- ═══ Reservations Management ═══ -->
-    <div class="quick-filters">
-      <button class="qf-btn active" onclick="quickFilter('all',this)">All</button>
-      <button class="qf-btn" onclick="quickFilter('today',this)">Today</button>
-      <button class="qf-btn" onclick="quickFilter('upcoming',this)">Upcoming</button>
-      <button class="qf-btn" onclick="quickFilter('pending',this)">Pending</button>
-      <button class="qf-btn" onclick="quickFilter('confirmed',this)">Confirmed</button>
-      <button class="qf-btn" onclick="quickFilter('cancelled',this)">Cancelled</button>
-      <button class="qf-btn" onclick="quickFilter('completed',this)">Completed</button>
-      <button class="qf-btn" onclick="quickFilter('no_show',this)">No Show</button>
+    <!-- ═══════════════════════════════════
+         SECTION 2: ANALYTICS
+    ═══════════════════════════════════ -->
+    <div class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <span class="panel-title">Analytics</span>
+            <div class="tab-group">
+              <button class="tab-btn active" id="tabDaily" onclick="switchTab('daily')">Daily</button>
+              <button class="tab-btn" id="tabMonthly" onclick="switchTab('monthly')">Monthly</button>
+            </div>
+          </div>
+          <div class="panel-controls">
+            <input type="date" id="anDate" onchange="loadAnalyticsView()">
+            <select id="anMonth" onchange="loadAnalyticsView()" style="display:none;"></select>
+            <select id="anYear"  onchange="loadAnalyticsView()" style="display:none;"></select>
+            <button class="btn-sm" onclick="downloadPDF()">↓ PDF</button>
+          </div>
+        </div>
+
+        <!-- Report filter pills (daily mode) -->
+        <div class="report-filters" id="reportFilters" style="display:none;">
+          <button class="rf-btn active" onclick="setReportRange('today',this)">Today</button>
+          <button class="rf-btn" onclick="setReportRange('7d',this)">Last 7 Days</button>
+          <button class="rf-btn" onclick="setReportRange('month',this)">This Month</button>
+          <button class="rf-btn" onclick="setReportRange('prev',this)">Prev Month</button>
+          <button class="rf-btn" onclick="setReportRange('custom',this)">Custom</button>
+          <input type="date" id="rfFrom" style="display:none;" onchange="loadAnalyticsView()">
+          <input type="date" id="rfTo"   style="display:none;" onchange="loadAnalyticsView()">
+        </div>
+
+        <!-- ── Daily view ── -->
+        <div id="viewDaily">
+          <div class="an-grid">
+            <div class="an-stat"><div class="an-val" id="dCompleted">—</div><div class="an-lbl">Completed</div></div>
+            <div class="an-stat"><div class="an-val green" id="dRevenue">—</div><div class="an-lbl">Total Revenue</div></div>
+            <div class="an-stat"><div class="an-val green" id="dCash">—</div><div class="an-lbl">Cash Revenue</div></div>
+            <div class="an-stat"><div class="an-val blue" id="dCard">—</div><div class="an-lbl">Card Revenue</div></div>
+            <div class="an-stat"><div class="an-val" id="dAvg">—</div><div class="an-lbl">Avg Spend</div></div>
+            <div class="an-stat"><div class="an-val purple" id="dNoShow">—</div><div class="an-lbl">No-Shows</div></div>
+            <div class="an-stat"><div class="an-val red" id="dCancelled">—</div><div class="an-lbl">Cancelled</div></div>
+          </div>
+
+          <div class="subsection-label">Payment Breakdown</div>
+          <div class="pay-breakdown">
+            <div class="pay-card">
+              <h4>Cash</h4>
+              <div class="pay-big green" id="dCashAmt">0 RSD</div>
+              <div class="pay-detail"><span id="dCashCount">0</span> reservations</div>
+              <div class="pay-pct" id="dCashPct" style="color:var(--green);">0%</div>
+              <div class="pay-bar"><div class="pay-bar-fill" id="dCashBar" style="width:0%;background:var(--green);"></div></div>
+            </div>
+            <div class="pay-card">
+              <h4>Card</h4>
+              <div class="pay-big blue" id="dCardAmt">0 RSD</div>
+              <div class="pay-detail"><span id="dCardCount">0</span> reservations</div>
+              <div class="pay-pct" id="dCardPct" style="color:var(--blue);">0%</div>
+              <div class="pay-bar"><div class="pay-bar-fill" id="dCardBar" style="width:0%;background:var(--blue);"></div></div>
+            </div>
+          </div>
+
+          <div id="dTxWrap" style="display:none;">
+            <div class="subsection-label">Transaction Records</div>
+            <div class="tx-wrap">
+              <table class="tx-table"><thead><tr>
+                <th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
+              </tr></thead><tbody id="dTxBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Monthly view ── -->
+        <div id="viewMonthly" style="display:none;">
+          <div class="an-grid">
+            <div class="an-stat"><div class="an-val" id="mCompleted">—</div><div class="an-lbl">Completed</div></div>
+            <div class="an-stat"><div class="an-val green" id="mRevenue">—</div><div class="an-lbl">Total Revenue</div></div>
+            <div class="an-stat"><div class="an-val green" id="mCash">—</div><div class="an-lbl">Cash Revenue</div></div>
+            <div class="an-stat"><div class="an-val blue" id="mCard">—</div><div class="an-lbl">Card Revenue</div></div>
+            <div class="an-stat"><div class="an-val" id="mAvg">—</div><div class="an-lbl">Avg Spend</div></div>
+            <div class="an-stat"><div class="an-val purple" id="mNoShow">—</div><div class="an-lbl">No-Shows</div></div>
+            <div class="an-stat"><div class="an-val red" id="mCancelled">—</div><div class="an-lbl">Cancelled</div></div>
+          </div>
+
+          <div class="subsection-label">Payment Breakdown</div>
+          <div class="pay-breakdown">
+            <div class="pay-card">
+              <h4>Cash</h4>
+              <div class="pay-big green" id="mCashAmt">0 RSD</div>
+              <div class="pay-detail"><span id="mCashCount">0</span> reservations</div>
+              <div class="pay-pct" id="mCashPct" style="color:var(--green);">0%</div>
+              <div class="pay-bar"><div class="pay-bar-fill" id="mCashBar" style="width:0%;background:var(--green);"></div></div>
+            </div>
+            <div class="pay-card">
+              <h4>Card</h4>
+              <div class="pay-big blue" id="mCardAmt">0 RSD</div>
+              <div class="pay-detail"><span id="mCardCount">0</span> reservations</div>
+              <div class="pay-pct" id="mCardPct" style="color:var(--blue);">0%</div>
+              <div class="pay-bar"><div class="pay-bar-fill" id="mCardBar" style="width:0%;background:var(--blue);"></div></div>
+            </div>
+          </div>
+
+          <div class="subsection-label">Trends</div>
+          <div class="chart-grid">
+            <div class="chart-box"><h4>Revenue Trend</h4><canvas id="chartRevenue"></canvas></div>
+            <div class="chart-box"><h4>Completed Reservations</h4><canvas id="chartCompleted"></canvas></div>
+            <div class="chart-box"><h4>Payment Method Distribution</h4><canvas id="chartPayMethod"></canvas></div>
+            <div class="chart-box"><h4>No-Show Trend</h4><canvas id="chartNoShow"></canvas></div>
+          </div>
+
+          <div class="subsection-label">Daily Breakdown</div>
+          <div class="tx-wrap">
+            <table class="tx-table"><thead><tr>
+              <th>Date</th><th>Completed</th><th>Revenue</th><th>Cash</th><th>Card</th><th>No Show</th><th>Cancelled</th>
+            </tr></thead><tbody id="mDayBody"></tbody></table>
+          </div>
+
+          <div id="mTxWrap" style="display:none;">
+            <div class="subsection-label">Transaction Records</div>
+            <div class="tx-wrap">
+              <table class="tx-table"><thead><tr>
+                <th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
+              </tr></thead><tbody id="mTxBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="filters">
-      <input type="text"  id="filterSearch" class="filter-search" placeholder="Search name, email, phone, table…" oninput="debounceLoad()">
-      <input type="date"  id="filterDate" onchange="loadReservations()">
-      <select id="filterStatus" onchange="loadReservations()">
-        <option value="">All statuses</option>
-        <option value="pending">Pending</option>
-        <option value="confirmed">Confirmed</option>
-        <option value="cancelled">Cancelled</option>
-        <option value="completed">Completed</option>
-        <option value="no_show">No Show</option>
-      </select>
-      <button class="filter-btn" onclick="clearFilters()">Clear</button>
-      <button class="filter-btn" onclick="loadAll()" style="margin-left:auto;">↻ Refresh</button>
+
+    <!-- ═══════════════════════════════════
+         SECTION 3: RESERVATIONS
+    ═══════════════════════════════════ -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Reservations</span>
+        <div class="section-right">
+          <button class="filter-btn" onclick="loadAll()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="quick-filters">
+        <button class="qf-btn active" onclick="quickFilter('all',this)">All</button>
+        <button class="qf-btn" onclick="quickFilter('today',this)">Today</button>
+        <button class="qf-btn" onclick="quickFilter('upcoming',this)">Upcoming</button>
+        <button class="qf-btn" onclick="quickFilter('pending',this)">Pending</button>
+        <button class="qf-btn" onclick="quickFilter('confirmed',this)">Confirmed</button>
+        <button class="qf-btn" onclick="quickFilter('cancelled',this)">Cancelled</button>
+        <button class="qf-btn" onclick="quickFilter('completed',this)">Completed</button>
+        <button class="qf-btn" onclick="quickFilter('no_show',this)">No Show</button>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="filterSearch" class="filter-search" placeholder="Search name, email, phone, table…" oninput="debounceLoad()">
+        <input type="date" id="filterDate" onchange="loadReservations()">
+        <select id="filterStatus" onchange="loadReservations()">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="completed">Completed</option>
+          <option value="no_show">No Show</option>
+        </select>
+        <button class="filter-btn" onclick="clearFilters()">Clear</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="res-table">
+          <thead><tr>
+            <th>Guest</th><th>Date</th><th>Time</th><th>Table</th><th>Guests</th><th>Contact</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="resBody"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Guest</th><th>Date</th><th>Time</th><th>Table</th><th>Guests</th><th>Contact</th><th>Status</th><th>Actions</th>
-        </tr></thead>
-        <tbody id="resBody"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
-      </table>
-    </div>
+
   </div>
 </div>
 
-<!-- Payment modal -->
-<div class="pay-overlay" id="payOverlay">
-  <div class="pay-box">
+<!-- ── Payment modal ── -->
+<div class="modal-overlay" id="payOverlay">
+  <div class="modal-box pay-box">
     <h3>Complete Reservation</h3>
     <p>Enter payment details to close this reservation.</p>
     <div class="pay-methods">
-      <button class="pay-method-btn active" id="payBtnCash" onclick="selectPayMethod('cash')">💵 Cash</button>
-      <button class="pay-method-btn"        id="payBtnCard" onclick="selectPayMethod('card')">💳 Card</button>
+      <button class="pay-method-btn active" id="payBtnCash" onclick="selectPayMethod('cash')">Cash</button>
+      <button class="pay-method-btn"        id="payBtnCard" onclick="selectPayMethod('card')">Card</button>
     </div>
     <div class="pay-amount-wrap">
       <label>Amount paid</label>
@@ -522,22 +639,22 @@
   </div>
 </div>
 
-<!-- Cancel modal -->
-<div class="cancel-overlay" id="cancelOverlay">
-  <div class="cancel-box">
+<!-- ── Cancel modal ── -->
+<div class="modal-overlay" id="cancelOverlay">
+  <div class="modal-box cancel-box">
     <div class="cancel-icon">⚠️</div>
     <h3>Cancel Reservation?</h3>
     <p id="cancelMsg">This will cancel the reservation. The table will become available again.</p>
     <div class="cancel-actions">
-      <button class="cancel-btn-back"    onclick="closeCancelModal()">Keep It</button>
+      <button class="cancel-btn-back" onclick="closeCancelModal()">Keep It</button>
       <button class="cancel-btn-confirm" id="cancelConfirmBtn">Yes, Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- Detail modal -->
-<div class="detail-overlay" id="detailOverlay">
-  <div class="detail-box">
+<!-- ── Detail modal ── -->
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal-box detail-box">
     <button class="detail-close" onclick="closeDetail()">✕</button>
     <h3>Reservation Details</h3>
     <div id="detailContent"></div>
@@ -556,14 +673,14 @@
   function payIcon(m) {
     if (!m) return '—';
     const c = m==='cash'?'var(--green)':'var(--blue)';
-    return `<span style="color:${c};font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase">${m==='cash'?'💵':'💳'} ${m}</span>`;
+    return `<span style="color:${c};font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500">${m.toUpperCase()}</span>`;
   }
   function pct(part, total) { return total > 0 ? Math.round(part/total*100) : 0; }
 
   /* ── Live date ── */
   function updateDate() {
     document.getElementById('liveDate').textContent =
-      new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+      new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}).toUpperCase();
   }
   updateDate(); setInterval(updateDate, 60000);
 
@@ -697,7 +814,6 @@
     loadAnalyticsView();
   }
 
-  /* ── Report range filters (daily only) ── */
   let _rfRange = 'today';
 
   function setReportRange(range, btn) {
@@ -717,7 +833,7 @@
   }
 
   /* ══════════════════════════════════════
-     DAILY ANALYTICS (from completed_reservations)
+     DAILY ANALYTICS
   ══════════════════════════════════════ */
   async function loadDailyAnalytics() {
     const date = document.getElementById('anDate').value || _today;
@@ -733,7 +849,6 @@
     document.getElementById('dNoShow').textContent     = d.no_show??0;
     document.getElementById('dCancelled').textContent  = d.cancelled??0;
 
-    // Payment breakdown
     const total = (d.cash||0)+(d.card||0);
     document.getElementById('dCashAmt').textContent   = fmt(d.cash)+' RSD';
     document.getElementById('dCashCount').textContent  = d.cash_count??0;
@@ -767,7 +882,7 @@
         <td>${r.guest_count}</td>
         <td>${payIcon(r.payment_method)}</td>
         <td style="color:var(--green);font-weight:500">${fmt(r.payment_amount_rsd)}</td>
-        <td class="muted" style="font-size:0.7rem">${esc(r.completed_by_admin)}</td>
+        <td class="muted" style="font-size:0.68rem">${esc(r.completed_by_admin)}</td>
       </tr>`;
     }).join('') + `<tr class="tx-total">
       <td colspan="5" style="text-align:right">TOTAL</td>
@@ -776,7 +891,7 @@
   }
 
   /* ══════════════════════════════════════
-     MONTHLY ANALYTICS (from completed_reservations)
+     MONTHLY ANALYTICS
   ══════════════════════════════════════ */
   let _charts = {};
 
@@ -805,15 +920,14 @@
     document.getElementById('mCardPct').textContent    = pct(data.card,total)+'%';
     document.getElementById('mCardBar').style.width    = pct(data.card,total)+'%';
 
-    // Day breakdown table
     const days = data.daily||[];
     const tbody = document.getElementById('mDayBody');
     let sumComp=0,sumRev=0,sumCash=0,sumCard=0,sumNS=0,sumCanc=0;
     tbody.innerHTML = days.map(d=>{
       sumComp+=d.completed||0; sumRev+=d.revenue||0; sumCash+=d.cash||0; sumCard+=d.card||0; sumNS+=d.no_show||0; sumCanc+=d.cancelled||0;
       const hasData = (d.completed||0)+(d.no_show||0)+(d.cancelled||0) > 0;
-      const z = v => v ? fmt(v) : '<span style="color:rgba(245,242,236,0.15)">0</span>';
-      return `<tr${hasData?'':' style="opacity:0.35"'}>
+      const z = v => v ? fmt(v) : '<span style="color:rgba(245,242,236,0.12)">0</span>';
+      return `<tr${hasData?'':' style="opacity:0.3"'}>
         <td>${fmtDate(d.date)}</td><td>${z(d.completed)}</td><td>${z(d.revenue)}</td>
         <td>${z(d.cash)}</td><td>${z(d.card)}</td><td>${z(d.no_show)}</td><td>${z(d.cancelled)}</td>
       </tr>`;
@@ -822,10 +936,8 @@
       <td>${fmt(sumCash)}</td><td>${fmt(sumCard)}</td><td>${sumNS}</td><td>${sumCanc}</td>
     </tr>`;
 
-    // Charts
     renderCharts(days, data);
 
-    // Monthly transactions
     const dateFrom = new Date(year,month-1,1).toISOString().split('T')[0];
     const dateTo   = new Date(year,month,0).toISOString().split('T')[0];
     loadMonthlyTransactions(dateFrom, dateTo);
@@ -854,7 +966,7 @@
         <td>${r.guest_count}</td>
         <td>${payIcon(r.payment_method)}</td>
         <td style="color:var(--green);font-weight:500">${fmt(r.payment_amount_rsd)}</td>
-        <td class="muted" style="font-size:0.7rem">${esc(r.completed_by_admin)}</td>
+        <td class="muted" style="font-size:0.68rem">${esc(r.completed_by_admin)}</td>
       </tr>`;
     }).join('') + `<tr class="tx-total">
       <td colspan="6" style="text-align:right">TOTAL</td>
@@ -863,14 +975,14 @@
   }
 
   /* ══════════════════════════════════════
-     CHARTS (Chart.js)
+     CHARTS
   ══════════════════════════════════════ */
   const _chartOpts = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
-      x: { ticks:{color:'rgba(245,242,236,0.25)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.03)'} },
-      y: { ticks:{color:'rgba(245,242,236,0.25)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+      x: { ticks:{color:'rgba(245,242,236,0.2)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.02)'} },
+      y: { ticks:{color:'rgba(245,242,236,0.2)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.04)'}, beginAtZero:true }
     }
   };
 
@@ -879,39 +991,35 @@
   function renderCharts(days, data) {
     const labels = days.map(d=>new Date(d.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'}));
 
-    // Revenue trend
     destroyChart('revenue');
     _charts.revenue = new Chart(document.getElementById('chartRevenue'),{
       type:'bar', data:{
         labels,
-        datasets:[{data:days.map(d=>d.revenue||0),backgroundColor:'rgba(109,191,103,0.5)',borderColor:'#6dbf67',borderWidth:1}]
+        datasets:[{data:days.map(d=>d.revenue||0),backgroundColor:'rgba(109,191,103,0.4)',borderColor:'#6dbf67',borderWidth:1,borderRadius:3}]
       }, options:{..._chartOpts, plugins:{...(_chartOpts.plugins),tooltip:{callbacks:{label:c=>fmt(c.raw)+' RSD'}}}}
     });
 
-    // Completed trend
     destroyChart('completed');
     _charts.completed = new Chart(document.getElementById('chartCompleted'),{
       type:'line', data:{
         labels,
-        datasets:[{data:days.map(d=>d.completed||0),borderColor:'var(--copper)',backgroundColor:'rgba(184,124,90,0.15)',fill:true,tension:0.3,pointRadius:2}]
+        datasets:[{data:days.map(d=>d.completed||0),borderColor:'var(--copper)',backgroundColor:'rgba(184,124,90,0.1)',fill:true,tension:0.35,pointRadius:2}]
       }, options:_chartOpts
     });
 
-    // Payment distribution (doughnut)
     destroyChart('payMethod');
     _charts.payMethod = new Chart(document.getElementById('chartPayMethod'),{
       type:'doughnut', data:{
         labels:['Cash','Card'],
-        datasets:[{data:[data.cash||0,data.card||0],backgroundColor:['rgba(109,191,103,0.6)','rgba(130,180,224,0.6)'],borderColor:['#6dbf67','#82b4e0'],borderWidth:1}]
-      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'rgba(245,242,236,0.5)',font:{size:10}}}}}
+        datasets:[{data:[data.cash||0,data.card||0],backgroundColor:['rgba(109,191,103,0.5)','rgba(130,180,224,0.5)'],borderColor:['#6dbf67','#82b4e0'],borderWidth:1}]
+      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'rgba(245,242,236,0.4)',font:{size:10},padding:12}}}}
     });
 
-    // No-show trend
     destroyChart('noShow');
     _charts.noShow = new Chart(document.getElementById('chartNoShow'),{
       type:'line', data:{
         labels,
-        datasets:[{data:days.map(d=>d.no_show||0),borderColor:'#c49de0',backgroundColor:'rgba(196,157,224,0.1)',fill:true,tension:0.3,pointRadius:2}]
+        datasets:[{data:days.map(d=>d.no_show||0),borderColor:'#c49de0',backgroundColor:'rgba(196,157,224,0.08)',fill:true,tension:0.35,pointRadius:2}]
       }, options:_chartOpts
     });
   }
@@ -1060,7 +1168,7 @@
     document.getElementById('cancelMsg').textContent='Are you absolutely sure? This cannot be undone.';
     const btn=document.getElementById('cancelConfirmBtn');
     btn.textContent='Cancel Reservation';
-    btn.style.background='rgba(180,60,60,0.4)';btn.style.borderColor='rgba(180,60,60,0.8)';
+    btn.style.background='rgba(180,60,60,0.35)';btn.style.borderColor='rgba(180,60,60,0.7)';
     btn.onclick=confirmCancel;
   }
   async function confirmCancel(){
