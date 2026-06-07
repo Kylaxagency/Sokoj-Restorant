@@ -472,9 +472,10 @@
       <input type="number" id="payAmount" placeholder="0" min="0">
       <span>RSD</span>
     </div>
+    <div id="payError" style="display:none;color:#e07a7a;font-size:0.75rem;margin-bottom:1rem;letter-spacing:0.04em;"></div>
     <div class="pay-actions">
       <button class="pay-btn-cancel"  onclick="closePayModal()">Cancel</button>
-      <button class="pay-btn-confirm" onclick="submitPayment()">Confirm & Complete</button>
+      <button class="pay-btn-confirm" id="payConfirmBtn" onclick="submitPayment()">Confirm & Complete</button>
     </div>
   </div>
 </div>
@@ -795,12 +796,14 @@
     document.getElementById('payBtnCash').classList.add('active');
     document.getElementById('payBtnCard').classList.remove('active');
     document.getElementById('payAmount').value = '';
+    document.getElementById('payError').style.display = 'none';
     document.getElementById('payOverlay').classList.add('open');
     setTimeout(() => document.getElementById('payAmount').focus(), 100);
   }
 
   function closePayModal() {
     document.getElementById('payOverlay').classList.remove('open');
+    document.getElementById('payError').style.display = 'none';
     _payResId = null;
   }
 
@@ -810,21 +813,52 @@
     document.getElementById('payBtnCard').classList.toggle('active', method === 'card');
   }
 
+  function showPayError(msg) {
+    const el = document.getElementById('payError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
   async function submitPayment() {
-    const amount = parseInt(document.getElementById('payAmount').value, 10);
     if (!_payResId) return;
+    const rawAmount = document.getElementById('payAmount').value.trim();
+    const amount    = rawAmount === '' ? 0 : parseInt(rawAmount, 10);
+
     if (isNaN(amount) || amount < 0) {
+      showPayError('Please enter a valid amount (0 or more).');
       document.getElementById('payAmount').focus();
       return;
     }
+
+    const btn = document.getElementById('payConfirmBtn');
+    btn.textContent = 'Saving…';
+    btn.disabled    = true;
+
     const { error } = await _supabase
       .from('reservations')
-      .update({ status: 'completed', payment_method: _payMethod, payment_amount: amount })
+      .update({
+        status:         'completed',
+        payment_method: _payMethod,
+        payment_amount: amount
+      })
       .eq('id', _payResId);
-    if (error) { console.error('Payment error:', error); return; }
+
+    btn.textContent = 'Confirm & Complete';
+    btn.disabled    = false;
+
+    if (error) {
+      console.error('Payment error:', error);
+      const msg = error.message || error.details || JSON.stringify(error);
+      if (msg.includes('payment_method') || msg.includes('payment_amount') || msg.includes('column')) {
+        showPayError('Database columns missing — please run add_payment_analytics.sql in Supabase first.');
+      } else {
+        showPayError('Error: ' + msg);
+      }
+      return;
+    }
+
     closePayModal();
     loadAll();
-    loadAnalytics();
   }
 
   /* ── CANCEL MODAL (double confirm) ── */
