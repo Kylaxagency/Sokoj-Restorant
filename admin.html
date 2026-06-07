@@ -121,6 +121,7 @@
   .status-confirmed { background: rgba(45,106,79,0.2);   color: #95d5b2; border: 0.5px solid rgba(45,106,79,0.4); }
   .status-cancelled { background: rgba(180,60,60,0.15);  color: #e07070; border: 0.5px solid rgba(180,60,60,0.3); }
   .status-completed { background: rgba(100,100,100,0.15);color: #aaa;    border: 0.5px solid rgba(100,100,100,0.3); }
+  .status-no_show   { background: rgba(120,60,180,0.15); color: #c49de0; border: 0.5px solid rgba(120,60,180,0.3); }
 
   /* Action buttons */
   .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -135,6 +136,8 @@
   .act-cancel:hover   { background: rgba(180,60,60,0.1); }
   .act-complete { border-color: rgba(184,124,90,0.4); color: var(--copper); }
   .act-complete:hover { background: rgba(184,124,90,0.1); }
+  .act-noshow   { border-color: rgba(120,60,180,0.4); color: #c49de0; }
+  .act-noshow:hover   { background: rgba(120,60,180,0.1); }
   .act-delete   { border-color: rgba(255,255,255,0.1); color: rgba(245,242,236,0.3); }
   .act-delete:hover   { border-color: rgba(180,60,60,0.4); color: #e07070; }
 
@@ -206,6 +209,7 @@
       <button class="qf-btn" onclick="quickFilter('confirmed',this)">Confirmed</button>
       <button class="qf-btn" onclick="quickFilter('cancelled',this)">Cancelled</button>
       <button class="qf-btn" onclick="quickFilter('completed',this)">Completed</button>
+      <button class="qf-btn" onclick="quickFilter('no_show',this)">No Show</button>
     </div>
 
     <!-- Search + filters -->
@@ -218,6 +222,7 @@
         <option value="confirmed">Confirmed</option>
         <option value="cancelled">Cancelled</option>
         <option value="completed">Completed</option>
+        <option value="no_show">No Show</option>
       </select>
       <button class="filter-btn" onclick="clearFilters()">Clear</button>
       <button class="filter-btn" onclick="loadAll()" style="margin-left:auto;">↻ Refresh</button>
@@ -427,6 +432,7 @@
     if (mode === 'confirmed') document.getElementById('filterStatus').value = 'confirmed';
     if (mode === 'cancelled') document.getElementById('filterStatus').value = 'cancelled';
     if (mode === 'completed') document.getElementById('filterStatus').value = 'completed';
+    if (mode === 'no_show')   document.getElementById('filterStatus').value = 'no_show';
 
     loadReservations();
   }
@@ -502,6 +508,7 @@
             ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus('${r.id}','confirmed')">Confirm</button>`  : ''}
             ${r.status !== 'completed'  ? `<button class="act-btn act-complete" onclick="setStatus('${r.id}','completed')">Done</button>`      : ''}
             ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="setStatus('${r.id}','cancelled')">Cancel</button>`    : ''}
+            ${r.status !== 'no_show'    ? `<button class="act-btn act-noshow"   onclick="setStatus('${r.id}','no_show')">No Show</button>`     : ''}
             <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
           </div>
         </td>
