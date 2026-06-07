@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sokoj — Admin Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --copper: #b87c5a;
+    --copper-light: #d4a082;
+    --warm-black: #111110;
+    --charcoal: #1a1a18;
+    --stone: #6b6860;
+    --ivory: #f5f2ec;
+    --cream: #ede9e0;
+    --serif: 'Georgia', serif;
+    --sans: system-ui, -apple-system, sans-serif;
+  }
+  body { font-family: var(--sans); background: var(--warm-black); color: var(--ivory); min-height: 100vh; }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+  }
+  .login-box {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.2);
+    padding: 3rem 2.5rem; width: 360px; text-align: center;
+  }
+  .login-box h1 { font-family: var(--serif); font-size: 1.6rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.4rem; }
+  .login-box p  { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--copper); margin-bottom: 2rem; }
+  .login-box input {
+    width: 100%; padding: 0.85rem 1rem; background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(245,242,236,0.15); color: var(--ivory);
+    font-size: 0.9rem; margin-bottom: 1rem; outline: none;
+  }
+  .login-box input:focus { border-color: var(--copper); }
+  .btn-copper {
+    width: 100%; padding: 0.9rem; background: var(--copper); color: #fff;
+    border: none; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn-copper:hover { background: var(--copper-light); }
+  .login-error { color: #e07070; font-size: 0.8rem; margin-top: 0.75rem; }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display: none; }
+
+  header {
+    background: var(--charcoal); border-bottom: 0.5px solid rgba(184,124,90,0.2);
+    padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-family: var(--serif); font-size: 1.2rem; font-weight: 300; }
+  header h1 span { color: var(--copper); }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .badge-live { background: #2d6a4f; color: #95d5b2; font-size: 0.65rem; letter-spacing: 0.15em; padding: 0.3rem 0.7rem; border-radius: 20px; text-transform: uppercase; }
+  .btn-logout { background: none; border: 0.5px solid rgba(245,242,236,0.2); color: rgba(245,242,236,0.5); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.4rem 0.9rem; cursor: pointer; }
+  .btn-logout:hover { border-color: var(--copper); color: var(--copper); }
+
+  .main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.15);
+    padding: 1.5rem; text-align: center;
+  }
+  .stat-card .num { font-family: var(--serif); font-size: 2.5rem; font-weight: 300; color: var(--copper); }
+  .stat-card .lbl { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(245,242,236,0.4); margin-top: 0.3rem; }
+
+  /* Filters */
+  .filters {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;
+  }
+  .filters input, .filters select {
+    padding: 0.6rem 0.9rem; background: var(--charcoal);
+    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
+    font-size: 0.8rem; outline: none;
+  }
+  .filters input:focus, .filters select:focus { border-color: var(--copper); }
+  .filter-btn {
+    padding: 0.6rem 1.2rem; background: none;
+    border: 0.5px solid rgba(184,124,90,0.5); color: var(--copper);
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+  }
+  .filter-btn:hover { background: rgba(184,124,90,0.1); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead th {
+    text-align: left; padding: 0.75rem 1rem;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: rgba(245,242,236,0.35); border-bottom: 0.5px solid rgba(184,124,90,0.15);
+  }
+  tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  tbody td { padding: 0.9rem 1rem; color: rgba(245,242,236,0.85); }
+  tbody td.muted { color: rgba(245,242,236,0.35); font-size: 0.8rem; }
+
+  /* Status badges */
+  .status {
+    display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
+  }
+  .status-pending   { background: rgba(180,140,60,0.15); color: #d4b060; border: 0.5px solid rgba(180,140,60,0.3); }
+  .status-confirmed { background: rgba(45,106,79,0.2);   color: #95d5b2; border: 0.5px solid rgba(45,106,79,0.4); }
+  .status-cancelled { background: rgba(180,60,60,0.15);  color: #e07070; border: 0.5px solid rgba(180,60,60,0.3); }
+  .status-completed { background: rgba(100,100,100,0.15);color: #aaa;    border: 0.5px solid rgba(100,100,100,0.3); }
+
+  /* Action buttons */
+  .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .act-btn {
+    padding: 0.3rem 0.65rem; font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase; border: 0.5px solid; cursor: pointer; background: none;
+    transition: all 0.15s;
+  }
+  .act-confirm  { border-color: rgba(45,106,79,0.5);  color: #95d5b2; }
+  .act-confirm:hover  { background: rgba(45,106,79,0.15); }
+  .act-cancel   { border-color: rgba(180,60,60,0.4);  color: #e07070; }
+  .act-cancel:hover   { background: rgba(180,60,60,0.1); }
+  .act-complete { border-color: rgba(184,124,90,0.4); color: var(--copper); }
+  .act-complete:hover { background: rgba(184,124,90,0.1); }
+  .act-delete   { border-color: rgba(255,255,255,0.1); color: rgba(245,242,236,0.3); }
+  .act-delete:hover   { border-color: rgba(180,60,60,0.4); color: #e07070; }
+
+  .empty-state { text-align: center; padding: 4rem; color: rgba(245,242,236,0.2); font-style: italic; }
+
+  /* Detail modal */
+  .detail-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-box {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.25);
+    padding: 2rem; width: 460px; max-width: 95vw; position: relative;
+  }
+  .detail-box h3 { font-family: var(--serif); font-size: 1.3rem; font-weight: 300; margin-bottom: 1.5rem; color: var(--ivory); }
+  .detail-row { display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+  .detail-row .k { color: rgba(245,242,236,0.4); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; }
+  .detail-row .v { color: var(--ivory); }
+  .detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: rgba(245,242,236,0.4); font-size: 1.2rem; cursor: pointer; }
+  .detail-close:hover { color: var(--copper); }
+
+  @media (max-width: 768px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>Sokoj</h1>
+    <p>Admin Dashboard</p>
+    <input type="password" id="passInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')login()">
+    <button class="btn-copper" onclick="login()">Sign In</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+  <header>
+    <h1>Sokoj <span>·</span> Reservations</h1>
+    <div class="header-right">
+      <span class="badge-live" id="liveDate"></span>
+      <button class="btn-logout" onclick="logout()">Log out</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card"><div class="num" id="statTotal">—</div><div class="lbl">Total</div></div>
+      <div class="stat-card"><div class="num" id="statToday">—</div><div class="lbl">Today</div></div>
+      <div class="stat-card"><div class="num" id="statPending">—</div><div class="lbl">Pending</div></div>
+      <div class="stat-card"><div class="num" id="statConfirmed">—</div><div class="lbl">Confirmed</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <input type="date" id="filterDate" onchange="loadReservations()">
+      <select id="filterStatus" onchange="loadReservations()">
+        <option value="">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="cancelled">Cancelled</option>
+        <option value="completed">Completed</option>
+      </select>
+      <button class="filter-btn" onclick="clearFilters()">Clear</button>
+      <button class="filter-btn" onclick="loadAll()" style="margin-left:auto;">↻ Refresh</button>
+    </div>
+
+    <!-- Reservations table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Guest</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Table</th>
+            <th>Guests</th>
+            <th>Contact</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="resBody">
+          <tr><td colspan="9" class="empty-state">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Detail modal -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-box">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <h3>Reservation Details</h3>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+  const API = '/api';
+  let token = '';
+
+  /* ── LOGIN ── */
+  async function login() {
+    const pass = document.getElementById('passInput').value;
+    const res  = await fetch(`${API}/admin/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      token = data.token;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadAll();
+    } else {
+      document.getElementById('loginError').textContent = 'Incorrect password';
+    }
+  }
+
+  function logout() {
+    token = '';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('passInput').value = '';
+  }
+
+  /* ── LIVE DATE ── */
+  function updateDate() {
+    const d = new Date();
+    document.getElementById('liveDate').textContent =
+      d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  }
+  updateDate();
+  setInterval(updateDate, 60000);
+
+  /* ── LOAD ── */
+  function headers() {
+    return { 'x-admin-token': token, 'Content-Type': 'application/json' };
+  }
+
+  async function loadAll() {
+    loadStats();
+    loadReservations();
+  }
+
+  async function loadStats() {
+    const res  = await fetch(`${API}/admin/stats`, { headers: headers() });
+    const data = await res.json();
+    document.getElementById('statTotal').textContent     = data.total;
+    document.getElementById('statToday').textContent     = data.today;
+    document.getElementById('statPending').textContent   = data.pending;
+    document.getElementById('statConfirmed').textContent = data.confirmed;
+  }
+
+  async function loadReservations() {
+    const date   = document.getElementById('filterDate').value;
+    const status = document.getElementById('filterStatus').value;
+    let url      = `${API}/admin/reservations?`;
+    if (date)   url += `date=${date}&`;
+    if (status) url += `status=${status}&`;
+
+    const res  = await fetch(url, { headers: headers() });
+    const data = await res.json();
+    renderTable(data);
+  }
+
+  function clearFilters() {
+    document.getElementById('filterDate').value   = '';
+    document.getElementById('filterStatus').value = '';
+    loadReservations();
+  }
+
+  /* ── RENDER ── */
+  function renderTable(rows) {
+    const tbody = document.getElementById('resBody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No reservations found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr onclick="showDetail(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="cursor:pointer;">
+        <td class="muted">#${r.id}</td>
+        <td><strong>${r.first_name} ${r.last_name}</strong></td>
+        <td>${formatDate(r.date)}</td>
+        <td>${r.time}</td>
+        <td><strong style="color:var(--copper)">${r.table_id}</strong> <span class="muted">${r.table_area}</span></td>
+        <td>${r.guests}</td>
+        <td class="muted">${r.email}<br>${r.phone}</td>
+        <td><span class="status status-${r.status}">${r.status}</span></td>
+        <td onclick="event.stopPropagation()">
+          <div class="actions">
+            ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus(${r.id},'confirmed')">Confirm</button>`  : ''}
+            ${r.status !== 'completed'  ? `<button class="act-btn act-complete" onclick="setStatus(${r.id},'completed')">Done</button>`     : ''}
+            ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="setStatus(${r.id},'cancelled')">Cancel</button>`   : ''}
+            <button class="act-btn act-delete" onclick="deleteRes(${r.id})">✕</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function formatDate(d) {
+    return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+  }
+
+  /* ── ACTIONS ── */
+  async function setStatus(id, status) {
+    await fetch(`${API}/admin/reservations/${id}/status`, {
+      method: 'PATCH', headers: headers(),
+      body: JSON.stringify({ status })
+    });
+    loadAll();
+  }
+
+  async function deleteRes(id) {
+    if (!confirm('Permanently delete this reservation?')) return;
+    await fetch(`${API}/admin/reservations/${id}`, { method: 'DELETE', headers: headers() });
+    loadAll();
+  }
+
+  /* ── DETAIL MODAL ── */
+  function showDetail(r) {
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-row"><span class="k">Name</span>    <span class="v">${r.first_name} ${r.last_name}</span></div>
+      <div class="detail-row"><span class="k">Email</span>   <span class="v">${r.email}</span></div>
+      <div class="detail-row"><span class="k">Phone</span>   <span class="v">${r.phone}</span></div>
+      <div class="detail-row"><span class="k">Date</span>    <span class="v">${formatDate(r.date)}</span></div>
+      <div class="detail-row"><span class="k">Time</span>    <span class="v">${r.time}</span></div>
+      <div class="detail-row"><span class="k">Table</span>   <span class="v">${r.table_id} · ${r.table_area}</span></div>
+      <div class="detail-row"><span class="k">Guests</span>  <span class="v">${r.guests}</span></div>
+      <div class="detail-row"><span class="k">Status</span>  <span class="v"><span class="status status-${r.status}">${r.status}</span></span></div>
+      <div class="detail-row"><span class="k">Notes</span>   <span class="v">${r.notes || '—'}</span></div>
+      <div class="detail-row"><span class="k">Created</span> <span class="v">${r.created_at}</span></div>
+    `;
+    document.getElementById('detailOverlay').classList.add('open');
+  }
+
+  function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+  }
+
+  document.getElementById('detailOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detailOverlay')) closeDetail();
+  });
+</script>
+</body>
+</html>

@@ -1782,6 +1782,13 @@
   .btn-submit:hover span { color: var(--ivory); }
 
   /* Success state */
+  .step-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(184,124,90,0.25); border: 1px solid rgba(184,124,90,0.4);
+    transition: all 0.3s;
+  }
+  .step-dot.active { background: var(--copper); border-color: var(--copper); }
+
   .modal-success {
     display: none;
     text-align: center;
@@ -2915,29 +2922,7 @@
       </div>
     </div>
 
-    <!-- ── GOOGLE MAP (full colour) ── -->
-    <div class="reveal" style="margin:3rem auto 0;max-width:780px;width:100%;">
-      <div style="position:relative;border:0.5px solid rgba(184,124,90,0.25);overflow:hidden;">
-        <iframe
-          src="https://www.google.com/maps?q=Restoran+Sokoj,+Misarska+12,+Beograd&output=embed"
-          width="100%" height="360"
-          style="display:block;border:0;"
-          allowfullscreen="" loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          title="Restoran Sokoj — Mišarska 12-14, Beograd">
-        </iframe>
-        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.75rem 1.2rem;background:rgba(17,17,16,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <span style="font-family:var(--sans);font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--copper);display:block;">Find Us</span>
-            <span style="font-family:var(--serif);font-size:1rem;color:var(--ivory);">Mišarska 12-14, Vračar, Belgrade</span>
-          </div>
-          <a href="https://www.google.com/maps/place/Restoran+Sokoj,+Misarska+12,+Beograd" target="_blank" rel="noopener"
-             style="font-family:var(--sans);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--copper);text-decoration:none;border:0.5px solid rgba(184,124,90,0.5);padding:0.5rem 1rem;">
-            Open in Maps
-          </a>
-        </div>
-      </div>
-    </div>
+    <!-- ── TABLE FLOOR PLAN moved here; Google map below ── -->
 
     <!-- ── PROVISIONAL TABLE MAP ── -->
     <div class="reveal" style="margin:4rem auto 0;max-width:780px;width:100%;">
@@ -3169,6 +3154,22 @@
       </div>
     </div>
 
+    <!-- ── GOOGLE MAP (smaller, below floor plan) ── -->
+    <div class="reveal" style="margin:3rem auto 0;max-width:600px;width:100%;">
+      <div style="position:relative;border:0.5px solid rgba(184,124,90,0.2);overflow:hidden;">
+        <iframe src="https://www.google.com/maps?q=Restoran+Sokoj,+Misarska+12,+Beograd&output=embed"
+          width="100%" height="240" style="display:block;border:0;" allowfullscreen="" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade" title="Restoran Sokoj location"></iframe>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.6rem 1rem;background:rgba(17,17,16,0.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-family:var(--serif);font-size:0.9rem;color:var(--ivory);">Mišarska 12-14, Vračar, Belgrade</span>
+          <a href="https://www.google.com/maps/search/Restoran+Sokoj+Misarska+12+Beograd" target="_blank" rel="noopener"
+             style="font-family:var(--sans);font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--copper);text-decoration:none;border:0.5px solid rgba(184,124,90,0.4);padding:0.4rem 0.8rem;">
+            Open in Maps
+          </a>
+        </div>
+      </div>
+    </div>
+
     <div class="reveal" style="text-align:center;">
       <button class="btn-primary" onclick="openModal()"><span>Make a Reservation</span></button>
 
@@ -3259,18 +3260,27 @@
   </div>
 </div>
 
-<!-- ── RESERVATION MODAL ── -->
+<!-- ── RESERVATION MODAL (multi-step) ── -->
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
+  <div class="modal" style="max-width:660px;">
     <button class="modal-close" onclick="closeModal()">✕</button>
 
-    <div id="modalForm">
-      <div class="modal-header">
-        <span class="section-label">Sokoj · Belgrade</span>
-        <h2 class="modal-title">Reserve Your Table</h2>
-        <p class="modal-subtitle">We look forward to welcoming you</p>
-      </div>
+    <!-- Step indicator -->
+    <div id="stepIndicator" style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:2rem;">
+      <div class="step-dot active" id="dot1"></div>
+      <div style="width:40px;height:1px;background:rgba(184,124,90,0.3);margin-top:5px;align-self:flex-start;margin-top:6px;"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div style="width:40px;height:1px;background:rgba(184,124,90,0.3);margin-top:6px;"></div>
+      <div class="step-dot" id="dot3"></div>
+    </div>
 
+    <!-- STEP 1: Basic info -->
+    <div id="step1">
+      <div class="modal-header">
+        <span class="section-label">Step 1 of 3</span>
+        <h2 class="modal-title">Your Details</h2>
+        <p class="modal-subtitle">Tell us about your visit</p>
+      </div>
       <div class="form-grid">
         <div class="form-group">
           <label class="form-label">First Name</label>
@@ -3289,37 +3299,19 @@
           <input type="tel" class="form-control" placeholder="+381 ..." id="resPhone">
         </div>
         <div class="form-group">
-          <label class="form-label">Preferred Date</label>
-          <!-- ════════════════════════════════
-               DATE PICKER
-               Connect to Supabase availability
-               table to disable booked dates
-               ════════════════════════════════ -->
+          <label class="form-label">Date</label>
           <input type="date" class="form-control" id="resDate">
         </div>
         <div class="form-group">
-          <label class="form-label">Preferred Time</label>
-          <!-- ════════════════════════════════
-               TIME SELECTOR
-               Populate from available slots
-               ════════════════════════════════ -->
+          <label class="form-label">Time</label>
           <select class="form-control" id="resTime">
             <option value="">Select time</option>
-            <option>19:00</option>
-            <option>19:30</option>
-            <option>20:00</option>
-            <option>20:30</option>
-            <option>21:00</option>
-            <option>21:30</option>
-            <option>22:00</option>
+            <option>19:00</option><option>19:30</option><option>20:00</option>
+            <option>20:30</option><option>21:00</option><option>21:30</option><option>22:00</option>
           </select>
         </div>
         <div class="form-group full">
           <label class="form-label">Number of Guests</label>
-          <!-- ════════════════════════════════
-               GUEST SELECTOR
-               Max covers per table: 8
-               ════════════════════════════════ -->
           <div class="guest-selector">
             <button type="button" class="guest-btn" onclick="adjustGuests(-1)">−</button>
             <span class="guest-count" id="guestCount">2</span>
@@ -3327,42 +3319,195 @@
           </div>
         </div>
         <div class="form-group full">
-          <label class="form-label">Special Requests or Dietary Notes</label>
-          <!-- ════════════════════════════════
-               SPECIAL REQUESTS
-               Store in Supabase reservations table
-               Field: special_requests TEXT
-               ════════════════════════════════ -->
+          <label class="form-label">Special Requests</label>
           <textarea class="form-control" placeholder="Allergies, celebrations, preferences..." id="specialRequests"></textarea>
         </div>
       </div>
-
-      <!-- ════════════════════════════════════════════════════════════
-           SUBMIT BUTTON
-           Connect to:
-           - Supabase: INSERT INTO reservations (...)
-           - Google Calendar: create event via Calendar API
-           - Admin Dashboard: trigger notification webhook
-           ════════════════════════════════════════════════════════════ -->
-      <button type="button" class="btn-submit" onclick="submitReservation()">
-        <span>Confirm Reservation</span>
-      </button>
-
-      <p style="font-family:var(--sans);font-size:0.65rem;font-weight:300;color:rgba(245,242,236,0.25);text-align:center;margin-top:1rem;letter-spacing:0.05em;">
-        We will confirm your reservation by email within 2 hours. For immediate assistance, call +381 11 000 0000.
-      </p>
+      <button type="button" class="btn-submit" onclick="goStep2()"><span>Continue — Select Table →</span></button>
     </div>
 
-    <!-- Success state -->
+    <!-- STEP 2: Table selection -->
+    <div id="step2" style="display:none;">
+      <div class="modal-header">
+        <span class="section-label">Step 2 of 3</span>
+        <h2 class="modal-title">Choose Your Table</h2>
+        <p class="modal-subtitle" id="step2Sub">Select an available table</p>
+      </div>
+
+      <!-- Legend -->
+      <div style="display:flex;gap:1.5rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap;">
+        <span style="font-family:var(--sans);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--ivory);display:flex;align-items:center;gap:0.4rem;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#b87c5a;display:inline-block;"></span>Available
+        </span>
+        <span style="font-family:var(--sans);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--ivory);display:flex;align-items:center;gap:0.4rem;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#3a3a2a;border:1px solid rgba(245,242,236,0.15);display:inline-block;"></span>Booked
+        </span>
+        <span style="font-family:var(--sans);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--ivory);display:flex;align-items:center;gap:0.4rem;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#d4a082;border:2px solid #fff;display:inline-block;"></span>Selected
+        </span>
+      </div>
+
+      <div style="border:0.5px solid rgba(184,124,90,0.2);background:#0d0d0c;padding:0.75rem;overflow-x:auto;">
+        <svg id="modalFloor" viewBox="0 0 620 360" style="width:100%;height:auto;display:block;min-width:320px;" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="604" height="344" rx="3" fill="none" stroke="rgba(184,124,90,0.2)" stroke-width="1"/>
+          <line x1="340" y1="8" x2="340" y2="352" stroke="rgba(184,124,90,0.12)" stroke-width="1" stroke-dasharray="5 4"/>
+          <text x="170" y="24" font-family="'Jost',sans-serif" font-size="8" fill="rgba(245,242,236,0.25)" letter-spacing="3" text-anchor="middle">INDOOR</text>
+          <text x="480" y="24" font-family="'Jost',sans-serif" font-size="8" fill="rgba(245,242,236,0.25)" letter-spacing="3" text-anchor="middle">GARDEN TERRACE</text>
+          <rect x="16" y="300" width="90" height="22" rx="2" fill="#1a1a12" stroke="rgba(184,124,90,0.3)" stroke-width="0.7"/>
+          <text x="61" y="314" font-family="'Jost',sans-serif" font-size="7" fill="rgba(184,124,90,0.6)" letter-spacing="2" text-anchor="middle">BAR</text>
+          <rect x="270" y="336" width="80" height="18" rx="2" fill="#1a1a12" stroke="rgba(184,124,90,0.3)" stroke-width="0.7"/>
+          <text x="310" y="348" font-family="'Jost',sans-serif" font-size="7" fill="rgba(184,124,90,0.6)" letter-spacing="2" text-anchor="middle">ENTRANCE</text>
+
+          <!-- Indoor tables -->
+          <g class="mt" data-tid="T1" data-seats="2" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="38" y="50" width="44" height="34" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="42" y="42" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="57" y="42" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="42" y="85" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="57" y="85" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="60" y="71" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T1</text>
+            <text x="60" y="81" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">2p</text>
+          </g>
+          <g class="mt" data-tid="T2" data-seats="2" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="110" y="50" width="44" height="34" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="114" y="42" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="129" y="42" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="114" y="85" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="129" y="85" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="132" y="71" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T2</text>
+            <text x="132" y="81" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">2p</text>
+          </g>
+          <g class="mt" data-tid="T3" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="195" y="45" width="52" height="42" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="199" y="37" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="215" y="37" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="199" y="88" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="215" y="88" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="185" y="53" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="249" y="53" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="221" y="69" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T3</text>
+            <text x="221" y="79" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <g class="mt" data-tid="T4" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="270" y="45" width="52" height="42" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="274" y="37" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="290" y="37" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="274" y="88" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="290" y="88" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="260" y="53" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="324" y="53" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="296" y="69" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T4</text>
+            <text x="296" y="79" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <g class="mt" data-tid="T5" data-seats="6" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="38" y="165" width="68" height="44" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="42" y="157" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="58" y="157" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="74" y="157" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="42" y="210" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="58" y="210" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="74" y="210" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="72" y="191" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T5</text>
+            <text x="72" y="201" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">6p</text>
+          </g>
+          <g class="mt" data-tid="T6" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="148" y="168" width="52" height="42" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="152" y="160" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="168" y="160" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="152" y="211" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="168" y="211" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="138" y="176" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="202" y="176" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="174" y="192" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T6</text>
+            <text x="174" y="202" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <g class="mt" data-tid="T7" data-seats="2" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="254" y="172" width="44" height="34" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="258" y="164" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="273" y="164" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="258" y="207" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="273" y="207" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="276" y="193" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T7</text>
+            <text x="276" y="203" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">2p</text>
+          </g>
+          <g class="mt" data-tid="T8" data-seats="2" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="38" y="258" width="44" height="34" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="42" y="250" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="57" y="250" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="42" y="293" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="57" y="293" width="9" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="60" y="279" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T8</text>
+            <text x="60" y="289" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">2p</text>
+          </g>
+          <g class="mt" data-tid="T9" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="130" y="255" width="52" height="42" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="134" y="247" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="150" y="247" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="134" y="298" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="150" y="298" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="120" y="263" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="184" y="263" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="156" y="279" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T9</text>
+            <text x="156" y="289" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <g class="mt" data-tid="T10" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <rect x="240" y="255" width="52" height="42" rx="3" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <rect x="244" y="247" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="260" y="247" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="244" y="298" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="260" y="298" width="10" height="7" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <rect x="230" y="263" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/><rect x="294" y="263" width="8" height="10" rx="1" fill="rgba(184,124,90,0.4)"/>
+            <text x="266" y="279" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">T10</text>
+            <text x="266" y="289" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <!-- Garden round tables -->
+          <g class="mt" data-tid="G1" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <circle cx="390" cy="78" r="26" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <circle cx="390" cy="48" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="390" cy="108" r="7" fill="rgba(184,124,90,0.4)"/>
+            <circle cx="360" cy="78" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="420" cy="78" r="7" fill="rgba(184,124,90,0.4)"/>
+            <text x="390" y="75" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">G1</text>
+            <text x="390" y="85" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <g class="mt" data-tid="G2" data-seats="2" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <circle cx="490" cy="78" r="20" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <circle cx="490" cy="54" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="490" cy="102" r="7" fill="rgba(184,124,90,0.4)"/>
+            <text x="490" y="75" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">G2</text>
+            <text x="490" y="85" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">2p</text>
+          </g>
+          <g class="mt" data-tid="G3" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <circle cx="578" cy="78" r="26" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <circle cx="578" cy="48" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="578" cy="108" r="7" fill="rgba(184,124,90,0.4)"/>
+            <circle cx="548" cy="78" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="608" cy="78" r="7" fill="rgba(184,124,90,0.4)"/>
+            <text x="578" y="75" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">G3</text>
+            <text x="578" y="85" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <g class="mt" data-tid="G4" data-seats="6" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <circle cx="400" cy="230" r="30" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <circle cx="400" cy="196" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="400" cy="264" r="7" fill="rgba(184,124,90,0.4)"/>
+            <circle cx="367" cy="213" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="433" cy="213" r="7" fill="rgba(184,124,90,0.4)"/>
+            <circle cx="367" cy="247" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="433" cy="247" r="7" fill="rgba(184,124,90,0.4)"/>
+            <text x="400" y="227" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">G4</text>
+            <text x="400" y="237" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">6p</text>
+          </g>
+          <g class="mt" data-tid="G5" data-seats="4" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <circle cx="510" cy="210" r="26" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <circle cx="510" cy="180" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="510" cy="240" r="7" fill="rgba(184,124,90,0.4)"/>
+            <circle cx="480" cy="210" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="540" cy="210" r="7" fill="rgba(184,124,90,0.4)"/>
+            <text x="510" y="207" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">G5</text>
+            <text x="510" y="217" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">4p</text>
+          </g>
+          <g class="mt" data-tid="G6" data-seats="2" onclick="modalSelectTable(this)" style="cursor:pointer;">
+            <circle cx="578" cy="270" r="20" fill="#b87c5a" stroke="rgba(184,124,90,0.5)" stroke-width="1" class="tr"/>
+            <circle cx="578" cy="246" r="7" fill="rgba(184,124,90,0.4)"/><circle cx="578" cy="294" r="7" fill="rgba(184,124,90,0.4)"/>
+            <text x="578" y="267" font-family="'Jost',sans-serif" font-size="8" fill="#fff" text-anchor="middle" class="tl">G6</text>
+            <text x="578" y="277" font-family="'Jost',sans-serif" font-size="6" fill="rgba(255,255,255,0.5)" text-anchor="middle">2p</text>
+          </g>
+        </svg>
+      </div>
+
+      <div id="modalTableBar" style="display:none;margin-top:1rem;padding:0.9rem 1rem;border:0.5px solid rgba(184,124,90,0.35);background:rgba(184,124,90,0.05);display:none;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <span id="modalTableText" style="font-family:var(--serif);font-size:0.95rem;color:var(--ivory);"></span>
+        <button onclick="goStep3()" style="font-family:var(--sans);font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;background:var(--copper);color:#fff;border:none;padding:0.65rem 1.4rem;cursor:pointer;">Confirm Table →</button>
+      </div>
+      <button type="button" onclick="goStep1()" style="background:none;border:none;color:rgba(245,242,236,0.35);font-size:0.75rem;cursor:pointer;margin-top:1rem;letter-spacing:0.1em;">← Back</button>
+    </div>
+
+    <!-- STEP 3: Confirmation -->
+    <div id="step3" style="display:none;text-align:center;padding:1rem 0;">
+      <div class="success-checkmark">
+        <svg viewBox="0 0 28 28"><polyline points="5,14 11,20 23,8"/></svg>
+      </div>
+      <h3 style="font-family:var(--serif);font-size:1.6rem;font-weight:300;color:var(--ivory);margin-bottom:0.5rem;">Confirm Your Reservation</h3>
+      <div id="summaryBox" style="text-align:left;border:0.5px solid rgba(184,124,90,0.2);padding:1.2rem 1.5rem;margin:1.5rem 0;background:rgba(184,124,90,0.04);font-size:0.85rem;"></div>
+      <button type="button" class="btn-submit" onclick="submitReservation()"><span>Confirm Reservation</span></button>
+      <div style="margin-top:0.75rem;">
+        <button onclick="goStep2()" style="background:none;border:none;color:rgba(245,242,236,0.35);font-size:0.75rem;cursor:pointer;letter-spacing:0.1em;">← Change table</button>
+      </div>
+    </div>
+
+    <!-- Success -->
     <div class="modal-success" id="modalSuccess">
       <div class="success-checkmark">
         <svg viewBox="0 0 28 28"><polyline points="5,14 11,20 23,8"/></svg>
       </div>
       <h3 style="font-family:var(--serif);font-size:1.8rem;font-weight:300;color:var(--ivory);margin-bottom:0.75rem;">Reservation Received</h3>
-      <p style="font-family:var(--serif);font-style:italic;color:rgba(245,242,236,0.5);font-size:1rem;line-height:1.7;margin-bottom:2rem;">We have received your request and will<br>confirm shortly by email. We look forward<br>to welcoming you to Sokoj.</p>
+      <p style="font-family:var(--serif);font-style:italic;color:rgba(245,242,236,0.5);font-size:1rem;line-height:1.7;margin-bottom:2rem;">We have received your request and will<br>confirm shortly by email or phone.<br>We look forward to welcoming you.</p>
       <button class="btn-secondary" onclick="closeModal()">Close</button>
     </div>
-
   </div>
 </div>
 
@@ -3455,79 +3600,205 @@
   }
 
   /* ── MODAL ── */
+  /* ── MULTI-STEP MODAL ── */
+  let guests = 2;
+  let modalSelectedTable = null;
+  let modalSelectedTableData = null;
+  const API_BASE = window.location.origin;
+
+  function setDots(step) {
+    [1,2,3].forEach(i => {
+      document.getElementById('dot' + i).classList.toggle('active', i <= step);
+    });
+  }
+
+  function showOnly(id) {
+    ['step1','step2','step3','modalSuccess'].forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.style.display = (s === id) ? 'block' : 'none';
+    });
+    document.getElementById('stepIndicator').style.display =
+      (id === 'modalSuccess') ? 'none' : 'flex';
+  }
+
   function openModal() {
     document.getElementById('modalOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
-    // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('resDate').min = today;
+    showOnly('step1');
+    setDots(1);
+    modalSelectedTable = null;
+    modalSelectedTableData = null;
   }
 
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('active');
     document.body.style.overflow = '';
-    setTimeout(() => {
-      document.getElementById('modalForm').style.display = 'block';
-      document.getElementById('modalSuccess').classList.remove('active');
-    }, 400);
   }
 
-  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  document.getElementById('modalOverlay').addEventListener('click', e => {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
 
-  /* ── GUEST COUNTER ── */
-  let guests = 2;
   function adjustGuests(delta) {
     guests = Math.min(12, Math.max(1, guests + delta));
     document.getElementById('guestCount').textContent = guests;
   }
 
-  /* ── RESERVATION SUBMIT ── */
-  function submitReservation() {
-    const firstName = document.getElementById('firstName').value;
-    const resDate = document.getElementById('resDate').value;
-    const resTime = document.getElementById('resTime').value;
+  /* Step 1 → 2 */
+  async function goStep2() {
+    const fn   = document.getElementById('firstName').value.trim();
+    const ln   = document.getElementById('lastName').value.trim();
+    const em   = document.getElementById('resEmail').value.trim();
+    const ph   = document.getElementById('resPhone').value.trim();
+    const date = document.getElementById('resDate').value;
+    const time = document.getElementById('resTime').value;
 
-    if (!firstName || !resDate || !resTime) {
-      const controls = document.querySelectorAll('.form-control');
-      controls.forEach(c => {
-        if (!c.value) {
-          c.style.borderColor = 'rgba(184, 124, 90, 0.8)';
+    if (!fn || !ln || !em || !ph || !date || !time) {
+      document.querySelectorAll('#step1 .form-control').forEach(c => {
+        if (!c.value.trim()) {
+          c.style.borderColor = 'rgba(184,124,90,0.9)';
           setTimeout(() => c.style.borderColor = '', 2000);
         }
       });
       return;
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       RESERVATION SUBMISSION
-       Replace this block with your actual API call:
-       
-       const reservation = {
-         first_name: firstName,
-         last_name: document.getElementById('lastName').value,
-         email: document.getElementById('resEmail').value,
-         phone: document.getElementById('resPhone').value,
-         date: resDate,
-         time: resTime,
-         guests: guests,
-         special_requests: document.getElementById('specialRequests').value,
-         created_at: new Date().toISOString()
-       };
+    // Fetch booked tables for this slot
+    try {
+      const res = await fetch(`${API_BASE}/api/available-tables?date=${date}&time=${time}`);
+      const data = await res.json();
+      applyAvailability(data.booked || []);
+    } catch {
+      applyAvailability([]);
+    }
 
-       // Supabase:
-       const { data, error } = await supabase.from('reservations').insert(reservation);
+    document.getElementById('step2Sub').textContent =
+      `${date} at ${time} · ${guests} guest${guests > 1 ? 's' : ''}`;
+    showOnly('step2');
+    setDots(2);
+  }
 
-       // Google Calendar:
-       // Use Google Calendar API to create event
-       
-       // Admin notification:
-       // POST to your webhook endpoint
-       ═══════════════════════════════════════════════════════════════ */
+  function applyAvailability(booked) {
+    document.querySelectorAll('#modalFloor .mt').forEach(g => {
+      const tid   = g.dataset.tid;
+      const seats = parseInt(g.dataset.seats);
+      const rect  = g.querySelector('.tr');
+      const label = g.querySelector('.tl');
+      const isBooked  = booked.includes(tid);
+      const tooSmall  = seats < guests;
 
-    document.getElementById('modalForm').style.display = 'none';
-    document.getElementById('modalSuccess').classList.add('active');
+      if (isBooked || tooSmall) {
+        rect.setAttribute('fill', '#3a3a2a');
+        rect.setAttribute('stroke', 'rgba(245,242,236,0.08)');
+        g.style.cursor = 'not-allowed';
+        g.dataset.disabled = '1';
+        if (label) label.setAttribute('fill', 'rgba(255,255,255,0.2)');
+        g.querySelectorAll('circle:not(.tr),rect:not(.tr)').forEach(el =>
+          el.setAttribute('fill', 'rgba(245,242,236,0.06)')
+        );
+      } else {
+        rect.setAttribute('fill', '#b87c5a');
+        rect.setAttribute('stroke', 'rgba(184,124,90,0.5)');
+        g.style.cursor = 'pointer';
+        g.dataset.disabled = '0';
+        if (label) label.setAttribute('fill', '#fff');
+        g.querySelectorAll('circle:not(.tr),rect:not(.tr)').forEach(el =>
+          el.setAttribute('fill', 'rgba(184,124,90,0.4)')
+        );
+      }
+    });
+  }
+
+  function modalSelectTable(g) {
+    if (g.dataset.disabled === '1') return;
+
+    // Deselect previous
+    if (modalSelectedTable && modalSelectedTable !== g) {
+      const pr = modalSelectedTable.querySelector('.tr');
+      pr.setAttribute('fill', '#b87c5a');
+      pr.setAttribute('stroke', 'rgba(184,124,90,0.5)');
+      pr.setAttribute('stroke-width', '1');
+    }
+
+    if (modalSelectedTable === g) {
+      const r = g.querySelector('.tr');
+      r.setAttribute('fill', '#b87c5a');
+      r.setAttribute('stroke', 'rgba(184,124,90,0.5)');
+      r.setAttribute('stroke-width', '1');
+      modalSelectedTable = null;
+      document.getElementById('modalTableBar').style.display = 'none';
+      return;
+    }
+
+    const r = g.querySelector('.tr');
+    r.setAttribute('fill', '#d4a082');
+    r.setAttribute('stroke', '#fff');
+    r.setAttribute('stroke-width', '2');
+    modalSelectedTable = g;
+    modalSelectedTableData = {
+      id:   g.dataset.tid,
+      seats: g.dataset.seats,
+      area:  g.dataset.tid.startsWith('G') ? 'Garden Terrace' : 'Indoor'
+    };
+
+    document.getElementById('modalTableText').textContent =
+      `Table ${modalSelectedTableData.id} · ${modalSelectedTableData.seats} seats · ${modalSelectedTableData.area}`;
+    const bar = document.getElementById('modalTableBar');
+    bar.style.display = 'flex';
+  }
+
+  /* Step 2 → 3 */
+  function goStep3() {
+    if (!modalSelectedTable) return;
+    const d = modalSelectedTableData;
+    document.getElementById('summaryBox').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem 1.5rem;font-family:var(--sans);">
+        <div><span style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(245,242,236,0.4);">Name</span><br><span style="color:var(--ivory);">${document.getElementById('firstName').value} ${document.getElementById('lastName').value}</span></div>
+        <div><span style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(245,242,236,0.4);">Contact</span><br><span style="color:var(--ivory);">${document.getElementById('resEmail').value}</span></div>
+        <div><span style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(245,242,236,0.4);">Date & Time</span><br><span style="color:var(--ivory);">${document.getElementById('resDate').value} at ${document.getElementById('resTime').value}</span></div>
+        <div><span style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(245,242,236,0.4);">Guests</span><br><span style="color:var(--ivory);">${guests}</span></div>
+        <div><span style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(245,242,236,0.4);">Table</span><br><span style="color:var(--copper);font-weight:500;">${d.id} · ${d.area}</span></div>
+      </div>
+    `;
+    showOnly('step3');
+    setDots(3);
+  }
+
+  function goStep1() { showOnly('step1'); setDots(1); }
+
+  /* Final submit */
+  async function submitReservation() {
+    const body = {
+      first_name: document.getElementById('firstName').value.trim(),
+      last_name:  document.getElementById('lastName').value.trim(),
+      email:      document.getElementById('resEmail').value.trim(),
+      phone:      document.getElementById('resPhone').value.trim(),
+      date:       document.getElementById('resDate').value,
+      time:       document.getElementById('resTime').value,
+      guests,
+      table_id:   modalSelectedTableData?.id   || 'TBD',
+      table_area: modalSelectedTableData?.area  || '',
+      notes:      document.getElementById('specialRequests').value.trim(),
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/api/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('conflict');
+    } catch (e) {
+      if (e.message === 'conflict') {
+        alert('This table is no longer available for that time slot. Please go back and choose another.');
+        goStep2();
+        return;
+      }
+    }
+
+    showOnly('modalSuccess');
   }
 
   /* ── LIGHTBOX ── */
