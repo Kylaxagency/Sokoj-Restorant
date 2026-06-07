@@ -532,8 +532,15 @@
           </div>
 
 
-          <div class="subsection-label">Daily Breakdown</div>
-          <div class="tx-wrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+            <div class="subsection-label" style="margin-bottom:0;">Daily Breakdown</div>
+            <div class="week-nav" style="display:flex;align-items:center;gap:0.4rem;">
+              <button class="btn-sm" id="weekPrev" onclick="changeWeek(-1)">← Prev</button>
+              <span id="weekLabel" style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;min-width:80px;text-align:center;"></span>
+              <button class="btn-sm" id="weekNext" onclick="changeWeek(1)">Next →</button>
+            </div>
+          </div>
+          <div class="tx-wrap" style="margin-top:0.5rem;">
             <table class="tx-table"><thead><tr>
               <th>Date</th><th>Completed</th><th>Revenue</th><th>Cash</th><th>Card</th><th>No Show</th><th>Cancelled</th>
             </tr></thead><tbody id="mDayBody"></tbody></table>
@@ -901,13 +908,41 @@
     document.getElementById('mCardPct').textContent    = pct(data.card,total)+'%';
     document.getElementById('mCardBar').style.width    = pct(data.card,total)+'%';
 
-    const days = data.daily||[];
+    _allDays = data.daily||[];
+    _currentWeek = 0;
+    renderWeek();
+
+    const dateFrom = new Date(year,month-1,1).toISOString().split('T')[0];
+    const dateTo   = new Date(year,month,0).toISOString().split('T')[0];
+    loadMonthlyTransactions(dateFrom, dateTo);
+  }
+
+  let _allDays = [], _currentWeek = 0;
+
+  function getWeeks(days) {
+    const weeks = [];
+    for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+    return weeks;
+  }
+
+  function changeWeek(dir) {
+    const weeks = getWeeks(_allDays);
+    _currentWeek = Math.max(0, Math.min(weeks.length - 1, _currentWeek + dir));
+    renderWeek();
+  }
+
+  function renderWeek() {
+    const weeks = getWeeks(_allDays);
+    if (!weeks.length) return;
+    _currentWeek = Math.max(0, Math.min(weeks.length - 1, _currentWeek));
+    const week = weeks[_currentWeek];
     const tbody = document.getElementById('mDayBody');
+    const z = v => v ? fmt(v) : '<span style="color:rgba(245,242,236,0.12)">0</span>';
+
     let sumComp=0,sumRev=0,sumCash=0,sumCard=0,sumNS=0,sumCanc=0;
-    tbody.innerHTML = days.map(d=>{
+    tbody.innerHTML = week.map(d=>{
       sumComp+=d.completed||0; sumRev+=d.revenue||0; sumCash+=d.cash||0; sumCard+=d.card||0; sumNS+=d.no_show||0; sumCanc+=d.cancelled||0;
       const hasData = (d.completed||0)+(d.no_show||0)+(d.cancelled||0) > 0;
-      const z = v => v ? fmt(v) : '<span style="color:rgba(245,242,236,0.12)">0</span>';
       return `<tr${hasData?'':' style="opacity:0.3"'}>
         <td>${fmtDate(d.date)}</td><td>${z(d.completed)}</td><td>${z(d.revenue)}</td>
         <td>${z(d.cash)}</td><td>${z(d.card)}</td><td>${z(d.no_show)}</td><td>${z(d.cancelled)}</td>
@@ -917,9 +952,9 @@
       <td>${fmt(sumCash)}</td><td>${fmt(sumCard)}</td><td>${sumNS}</td><td>${sumCanc}</td>
     </tr>`;
 
-    const dateFrom = new Date(year,month-1,1).toISOString().split('T')[0];
-    const dateTo   = new Date(year,month,0).toISOString().split('T')[0];
-    loadMonthlyTransactions(dateFrom, dateTo);
+    document.getElementById('weekLabel').textContent = 'Week ' + (_currentWeek + 1) + ' / ' + weeks.length;
+    document.getElementById('weekPrev').disabled = _currentWeek === 0;
+    document.getElementById('weekNext').disabled = _currentWeek === weeks.length - 1;
   }
 
   async function loadMonthlyTransactions(from, to) {
