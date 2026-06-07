@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sokoj — Admin Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -160,6 +162,41 @@
   .detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: rgba(245,242,236,0.4); font-size: 1.2rem; cursor: pointer; }
   .detail-close:hover { color: var(--copper); }
 
+  /* Analytics tabs */
+  .an-tabs { display: flex; gap: 0; border: 0.5px solid rgba(184,124,90,0.2); }
+  .an-tab {
+    padding: 0.35rem 1rem; background: none; border: none;
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,242,236,0.4); cursor: pointer; transition: all 0.15s;
+  }
+  .an-tab.active, .an-tab:hover { background: rgba(184,124,90,0.12); color: var(--copper); }
+
+  /* PDF button */
+  .btn-pdf {
+    padding: 0.4rem 1rem; background: none;
+    border: 0.5px solid rgba(184,124,90,0.4); color: var(--copper);
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-pdf:hover { background: rgba(184,124,90,0.1); }
+
+  /* Monthly breakdown table */
+  .an-table-wrap { overflow-x: auto; margin-top: 1.5rem; }
+  .an-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .an-table thead th {
+    text-align: left; padding: 0.6rem 0.8rem;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,242,236,0.3); border-bottom: 0.5px solid rgba(184,124,90,0.15);
+  }
+  .an-table tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.03); }
+  .an-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .an-table tbody td { padding: 0.55rem 0.8rem; color: rgba(245,242,236,0.75); }
+  .an-table tbody td.an-zero { color: rgba(245,242,236,0.2); }
+  .an-table tbody tr.an-total-row td {
+    border-top: 0.5px solid rgba(184,124,90,0.25); color: var(--copper);
+    font-weight: 500; padding-top: 0.8rem;
+  }
+
   /* Analytics */
   .analytics-section {
     background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.15);
@@ -172,12 +209,14 @@
   .analytics-header h3 {
     font-family: var(--serif); font-size: 1rem; font-weight: 300; color: var(--ivory);
   }
-  .analytics-header input[type=date] {
+  .analytics-header input[type=date],
+  .analytics-header select {
     padding: 0.4rem 0.8rem; background: rgba(255,255,255,0.04);
     border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
     font-size: 0.8rem; outline: none;
   }
-  .analytics-header input[type=date]:focus { border-color: var(--copper); }
+  .analytics-header input[type=date]:focus,
+  .analytics-header select:focus { border-color: var(--copper); }
   .analytics-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;
   }
@@ -309,21 +348,62 @@
       <div class="stat-card"><div class="num" id="statConfirmed">—</div><div class="lbl">Confirmed</div></div>
     </div>
 
-    <!-- Daily Analytics -->
+    <!-- Analytics -->
     <div class="analytics-section">
       <div class="analytics-header">
-        <h3>Daily Analytics</h3>
-        <input type="date" id="analyticsDate" onchange="loadAnalytics()">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <h3>Analytics</h3>
+          <div class="an-tabs">
+            <button class="an-tab active" id="tabDaily"   onclick="switchAnalyticsTab('daily')">Daily</button>
+            <button class="an-tab"        id="tabMonthly" onclick="switchAnalyticsTab('monthly')">Monthly</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+          <input type="date"   id="analyticsDate"  onchange="loadAnalytics()" style="display:block;">
+          <select id="analyticsMonth" onchange="loadMonthlyAnalytics()" style="display:none;"></select>
+          <select id="analyticsYear"  onchange="loadMonthlyAnalytics()" style="display:none;"></select>
+          <button class="btn-pdf" onclick="downloadPDF()">↓ Download PDF</button>
+        </div>
       </div>
-      <div class="analytics-grid">
-        <div class="an-card"><div class="an-num" id="anTotal">—</div><div class="an-lbl">Bookings</div></div>
-        <div class="an-card"><div class="an-num" id="anCompleted">—</div><div class="an-lbl">Completed</div></div>
-        <div class="an-card"><div class="an-num" id="anPending">—</div><div class="an-lbl">Pending</div></div>
-        <div class="an-card"><div class="an-num" id="anNoShow">—</div><div class="an-lbl">No Show</div></div>
-        <div class="an-card"><div class="an-num" id="anGuests">—</div><div class="an-lbl">Guests</div></div>
-        <div class="an-card revenue"><div class="an-num" id="anRevenue">—</div><div class="an-lbl">Revenue (RSD)</div></div>
-        <div class="an-card cash"><div class="an-num" id="anCash">—</div><div class="an-lbl">Cash (RSD)</div></div>
-        <div class="an-card card-pay"><div class="an-num" id="anCard">—</div><div class="an-lbl">Card (RSD)</div></div>
+
+      <!-- Daily view -->
+      <div id="anDailyView">
+        <div class="analytics-grid">
+          <div class="an-card"><div class="an-num" id="anTotal">—</div><div class="an-lbl">Bookings</div></div>
+          <div class="an-card"><div class="an-num" id="anCompleted">—</div><div class="an-lbl">Completed</div></div>
+          <div class="an-card"><div class="an-num" id="anPending">—</div><div class="an-lbl">Pending</div></div>
+          <div class="an-card"><div class="an-num" id="anNoShow">—</div><div class="an-lbl">No Show</div></div>
+          <div class="an-card"><div class="an-num" id="anGuests">—</div><div class="an-lbl">Guests</div></div>
+          <div class="an-card revenue"><div class="an-num" id="anRevenue">—</div><div class="an-lbl">Revenue (RSD)</div></div>
+          <div class="an-card cash"><div class="an-num" id="anCash">—</div><div class="an-lbl">Cash (RSD)</div></div>
+          <div class="an-card card-pay"><div class="an-num" id="anCard">—</div><div class="an-lbl">Card (RSD)</div></div>
+        </div>
+      </div>
+
+      <!-- Monthly view -->
+      <div id="anMonthlyView" style="display:none;">
+        <div class="analytics-grid">
+          <div class="an-card"><div class="an-num" id="manTotal">—</div><div class="an-lbl">Bookings</div></div>
+          <div class="an-card"><div class="an-num" id="manCompleted">—</div><div class="an-lbl">Completed</div></div>
+          <div class="an-card"><div class="an-num" id="manNoShow">—</div><div class="an-lbl">No Show</div></div>
+          <div class="an-card"><div class="an-num" id="manGuests">—</div><div class="an-lbl">Guests</div></div>
+          <div class="an-card revenue"><div class="an-num" id="manRevenue">—</div><div class="an-lbl">Revenue (RSD)</div></div>
+          <div class="an-card cash"><div class="an-num" id="manCash">—</div><div class="an-lbl">Cash (RSD)</div></div>
+          <div class="an-card card-pay"><div class="an-num" id="manCard">—</div><div class="an-lbl">Card (RSD)</div></div>
+        </div>
+        <div class="an-table-wrap">
+          <table class="an-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Bookings</th><th>Completed</th><th>Cancelled</th>
+                <th>No Show</th><th>Guests</th><th>Revenue (RSD)</th><th>Cash</th><th>Card</th>
+              </tr>
+            </thead>
+            <tbody id="anMonthlyBody">
+              <tr><td colspan="9" style="text-align:center;color:rgba(245,242,236,0.2);padding:2rem;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -562,7 +642,8 @@
   function loadAll() {
     loadStats();
     loadReservations();
-    loadAnalytics();
+    if (_analyticsTab === 'daily') loadAnalytics();
+    else loadMonthlyAnalytics();
   }
 
   /* ── Set analytics date to today on load ── */
@@ -800,12 +881,29 @@
     loadAnalytics();
   }
 
+  /* ── ANALYTICS TAB SWITCHING ── */
+  let _analyticsTab = 'daily';
+  let _lastDailyData   = null;
+  let _lastMonthlyData = null;
+
+  function switchAnalyticsTab(tab) {
+    _analyticsTab = tab;
+    document.getElementById('tabDaily').classList.toggle('active',   tab === 'daily');
+    document.getElementById('tabMonthly').classList.toggle('active', tab === 'monthly');
+    document.getElementById('anDailyView').style.display   = tab === 'daily'   ? 'block' : 'none';
+    document.getElementById('anMonthlyView').style.display = tab === 'monthly' ? 'block' : 'none';
+    document.getElementById('analyticsDate').style.display  = tab === 'daily'   ? 'block' : 'none';
+    document.getElementById('analyticsMonth').style.display = tab === 'monthly' ? 'block' : 'none';
+    document.getElementById('analyticsYear').style.display  = tab === 'monthly' ? 'block' : 'none';
+    if (tab === 'monthly') loadMonthlyAnalytics();
+  }
+
   /* ── DAILY ANALYTICS ── */
   async function loadAnalytics() {
-    const dateInput = document.getElementById('analyticsDate');
-    const date = dateInput.value || new Date().toISOString().split('T')[0];
+    const date = document.getElementById('analyticsDate').value || new Date().toISOString().split('T')[0];
     const { data, error } = await _supabase.rpc('get_daily_analytics', { p_date: date });
     if (error || !data) return;
+    _lastDailyData = data;
     document.getElementById('anTotal').textContent     = data.total        ?? '—';
     document.getElementById('anCompleted').textContent = data.completed    ?? '—';
     document.getElementById('anPending').textContent   = (data.pending ?? 0) + (data.confirmed ?? 0);
@@ -814,6 +912,176 @@
     document.getElementById('anRevenue').textContent   = (data.revenue ?? 0).toLocaleString();
     document.getElementById('anCash').textContent      = (data.cash    ?? 0).toLocaleString();
     document.getElementById('anCard').textContent      = (data.card    ?? 0).toLocaleString();
+  }
+
+  /* ── MONTHLY ANALYTICS ── */
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function initMonthYearPickers() {
+    const now   = new Date();
+    const mSel  = document.getElementById('analyticsMonth');
+    const ySel  = document.getElementById('analyticsYear');
+    MONTHS.forEach((m, i) => {
+      const o = document.createElement('option');
+      o.value = i + 1; o.textContent = m;
+      if (i + 1 === now.getMonth() + 1) o.selected = true;
+      mSel.appendChild(o);
+    });
+    for (let y = now.getFullYear(); y >= now.getFullYear() - 3; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === now.getFullYear()) o.selected = true;
+      ySel.appendChild(o);
+    }
+  }
+  initMonthYearPickers();
+
+  async function loadMonthlyAnalytics() {
+    const year  = parseInt(document.getElementById('analyticsYear').value,  10);
+    const month = parseInt(document.getElementById('analyticsMonth').value, 10);
+    const { data, error } = await _supabase.rpc('get_monthly_analytics', { p_year: year, p_month: month });
+    if (error || !data) return;
+    _lastMonthlyData = data;
+    const t = data.totals || {};
+    document.getElementById('manTotal').textContent     = t.total        ?? '—';
+    document.getElementById('manCompleted').textContent = t.completed    ?? '—';
+    document.getElementById('manNoShow').textContent    = t.no_show      ?? '—';
+    document.getElementById('manGuests').textContent    = t.total_guests ?? '—';
+    document.getElementById('manRevenue').textContent   = (t.revenue ?? 0).toLocaleString();
+    document.getElementById('manCash').textContent      = (t.cash    ?? 0).toLocaleString();
+    document.getElementById('manCard').textContent      = (t.card    ?? 0).toLocaleString();
+
+    const tbody = document.getElementById('anMonthlyBody');
+    const days  = data.daily || [];
+    if (!days.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:rgba(245,242,236,0.2);padding:2rem;">No data for this month</td></tr>';
+      return;
+    }
+    tbody.innerHTML = days.map(d => {
+      const dt = new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+      const z  = v => v ? v.toLocaleString() : '<span class="an-zero">0</span>';
+      return `<tr>
+        <td>${dt}</td>
+        <td>${d.total || '<span class="an-zero">0</span>'}</td>
+        <td>${d.completed || '<span class="an-zero">0</span>'}</td>
+        <td>${d.cancelled || '<span class="an-zero">0</span>'}</td>
+        <td>${d.no_show   || '<span class="an-zero">0</span>'}</td>
+        <td>${d.guests    || '<span class="an-zero">0</span>'}</td>
+        <td>${z(d.revenue)}</td>
+        <td>${z(d.cash)}</td>
+        <td>${z(d.card)}</td>
+      </tr>`;
+    }).join('') + `<tr class="an-total-row">
+      <td>TOTAL</td>
+      <td>${t.total ?? 0}</td>
+      <td>${t.completed ?? 0}</td>
+      <td>${t.cancelled ?? 0}</td>
+      <td>${t.no_show ?? 0}</td>
+      <td>${t.total_guests ?? 0}</td>
+      <td>${(t.revenue ?? 0).toLocaleString()}</td>
+      <td>${(t.cash ?? 0).toLocaleString()}</td>
+      <td>${(t.card ?? 0).toLocaleString()}</td>
+    </tr>`;
+  }
+
+  /* ── PDF EXPORT ── */
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // Header
+    doc.setFillColor(26, 26, 24);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(184, 124, 90);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SOKOJ RESTORAN', 14, 13);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(160, 140, 120);
+
+    let subtitle, body, cols;
+
+    if (_analyticsTab === 'daily') {
+      const date = document.getElementById('analyticsDate').value || new Date().toISOString().split('T')[0];
+      const d    = _lastDailyData || {};
+      subtitle   = 'Daily Analytics Report — ' + new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      doc.text(subtitle, 14, 20);
+      doc.setTextColor(30, 30, 30);
+
+      cols = [['Metric', 'Value']];
+      body = [
+        ['Total Bookings',  d.total        ?? 0],
+        ['Completed',       d.completed    ?? 0],
+        ['Pending / Confirmed', (d.pending ?? 0) + (d.confirmed ?? 0)],
+        ['No Show',         d.no_show      ?? 0],
+        ['Total Guests',    d.total_guests ?? 0],
+        ['Total Revenue',   ((d.revenue ?? 0).toLocaleString()) + ' RSD'],
+        ['Cash Revenue',    ((d.cash    ?? 0).toLocaleString()) + ' RSD'],
+        ['Card Revenue',    ((d.card    ?? 0).toLocaleString()) + ' RSD'],
+      ];
+      doc.autoTable({
+        startY: 36,
+        head: cols,
+        body: body,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [184, 124, 90], textColor: 255 },
+        alternateRowStyles: { fillColor: [245, 242, 236] },
+        margin: { left: 14, right: 14 }
+      });
+
+    } else {
+      const year  = document.getElementById('analyticsYear').value;
+      const month = document.getElementById('analyticsMonth').value;
+      const data  = _lastMonthlyData || {};
+      const t     = data.totals || {};
+      subtitle    = 'Monthly Analytics Report — ' + MONTHS[month - 1] + ' ' + year;
+      doc.text(subtitle, 14, 20);
+
+      // Summary table
+      doc.autoTable({
+        startY: 36,
+        head: [['Bookings','Completed','No Show','Guests','Revenue (RSD)','Cash (RSD)','Card (RSD)']],
+        body: [[
+          t.total ?? 0, t.completed ?? 0, t.no_show ?? 0, t.total_guests ?? 0,
+          (t.revenue ?? 0).toLocaleString(), (t.cash ?? 0).toLocaleString(), (t.card ?? 0).toLocaleString()
+        ]],
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [184, 124, 90], textColor: 255 },
+        margin: { left: 14, right: 14 }
+      });
+
+      // Daily breakdown
+      const days = data.daily || [];
+      if (days.length) {
+        doc.autoTable({
+          startY: doc.lastAutoTable.finalY + 8,
+          head: [['Date','Bookings','Completed','Cancelled','No Show','Guests','Revenue','Cash','Card']],
+          body: days.map(d => [
+            new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { day:'2-digit', month:'short' }),
+            d.total, d.completed, d.cancelled, d.no_show, d.guests,
+            (d.revenue || 0).toLocaleString(),
+            (d.cash    || 0).toLocaleString(),
+            (d.card    || 0).toLocaleString()
+          ]),
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [60, 60, 55], textColor: [184, 124, 90] },
+          alternateRowStyles: { fillColor: [245, 242, 236] },
+          margin: { left: 14, right: 14 }
+        });
+      }
+    }
+
+    // Footer
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Generated ' + new Date().toLocaleString('en-GB'), 14, 287);
+    doc.text('Sokoj Restoran — Confidential', 210 - 14, 287, { align: 'right' });
+
+    const filename = _analyticsTab === 'daily'
+      ? 'sokoj-daily-' + (document.getElementById('analyticsDate').value || 'today') + '.pdf'
+      : 'sokoj-monthly-' + document.getElementById('analyticsYear').value + '-' + String(document.getElementById('analyticsMonth').value).padStart(2,'0') + '.pdf';
+    doc.save(filename);
   }
 
   /* ── DETAIL MODAL ── */
