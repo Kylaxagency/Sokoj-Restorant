@@ -324,9 +324,11 @@
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     loadAll();
+    startAdminRealtime();
   }
 
   async function logout() {
+    stopAdminRealtime();
     await _supabase.auth.signOut();
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
@@ -347,8 +349,43 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       loadAll();
+      startAdminRealtime();
     }
   });
+
+  /* ── REALTIME: auto-refresh dashboard when reservations change ── */
+  let _adminChannel   = null;
+  let _adminRtTimer   = null;
+
+  function startAdminRealtime() {
+    stopAdminRealtime();
+    _adminChannel = _supabase
+      .channel('admin-reservations-live')
+      .on('postgres_changes', {
+        event:  '*',
+        schema: 'public',
+        table:  'reservations'
+      }, () => {
+        clearTimeout(_adminRtTimer);
+        _adminRtTimer = setTimeout(loadAll, 400);
+      })
+      .subscribe((status) => {
+        const badge = document.getElementById('liveDate');
+        if (!badge) return;
+        if (status === 'SUBSCRIBED') {
+          badge.style.background    = '#1a3d2b';
+          badge.style.color         = '#95d5b2';
+          badge.style.paddingLeft   = '0.5rem';
+          badge.innerHTML = '&#9679;&nbsp;' + badge.textContent.replace(/^[^\s]+\s/, '');
+          updateDate();
+        }
+      });
+  }
+
+  function stopAdminRealtime() {
+    if (_adminChannel) { _supabase.removeChannel(_adminChannel); _adminChannel = null; }
+    clearTimeout(_adminRtTimer);
+  }
 
   /* ── LOAD ALL ── */
   function loadAll() {

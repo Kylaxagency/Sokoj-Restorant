@@ -3128,7 +3128,7 @@
       </div>
 
       <!-- Legend -->
-      <div style="display:flex;gap:1.5rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap;">
+      <div style="display:flex;gap:1.5rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap;align-items:center;">
         <span style="font-family:var(--sans);font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--ivory);display:flex;align-items:center;gap:0.5rem;">
           <span style="width:11px;height:11px;border-radius:50%;background:var(--copper);display:inline-block;flex-shrink:0;"></span>Available
         </span>
@@ -3138,6 +3138,14 @@
         <span style="font-family:var(--sans);font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--ivory);display:flex;align-items:center;gap:0.5rem;">
           <span style="width:11px;height:11px;border-radius:50%;background:var(--copper-light);border:2px solid #fff;display:inline-block;flex-shrink:0;"></span>Selected
         </span>
+        <span id="liveIndicator" style="font-family:var(--sans);font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(184,124,90,0.5);display:flex;align-items:center;gap:0.4rem;margin-left:auto;">
+          <span id="liveDot" style="width:6px;height:6px;border-radius:50%;background:rgba(184,124,90,0.4);display:inline-block;"></span>Live
+        </span>
+      </div>
+
+      <!-- Real-time conflict notice (shown when selected table is taken) -->
+      <div id="rtNotice" style="display:none;background:rgba(180,60,40,0.12);border:0.5px solid rgba(220,80,50,0.35);color:#e07a7a;font-size:0.75rem;letter-spacing:0.06em;text-align:center;padding:0.65rem 1rem;margin-bottom:0.9rem;font-family:var(--sans);">
+        Your selected table was just reserved by another guest — please choose a different table.
       </div>
 
       <!-- Floor plan -->
@@ -3392,9 +3400,10 @@
       const el = document.getElementById(s);
       if (el) el.style.display = (s === id ? 'block' : 'none');
     });
-    // scroll modal to top
     const box = document.getElementById('modalBox');
     if (box) box.scrollTop = 0;
+    if (id === 'resStep2') startRealtimeSync();
+    else stopRealtimeSync();
   }
 
   function openModal() {
@@ -3425,8 +3434,11 @@
     document.getElementById('guestCount').textContent = guests;
   }
 
-  /* ── SUPABASE TABLE UUID CACHE ── */
+  /* ── SUPABASE TABLE UUID CACHE + REALTIME STATE ── */
   let _tableUUIDMap = {};
+  let _resChannel   = null;
+  let _resDate      = '';
+  let _resTime      = '';
 
   /* ── STEP 1 → 2 ── */
   async function resStep1Next() {
@@ -3467,6 +3479,8 @@
 
       _tableUUIDMap = {};
       const availableNumbers = [];
+      _resDate = date;
+      _resTime = time;
 
       if (data && !error) {
         data.forEach(t => {
@@ -3590,6 +3604,74 @@
     `;
     showResStep('resStep3');
     setProgress(3);
+  }
+
+  /* ── REALTIME: keep floor map live while customer is on Step 2 ── */
+  function startRealtimeSync() {
+    stopRealtimeSync();
+    if (!_resDate || !_resTime) return;
+
+    const dot = document.getElementById('liveDot');
+    if (dot) { dot.style.background = '#6dbf67'; dot.style.boxShadow = '0 0 5px 1px rgba(109,191,103,0.5)'; }
+    const ind = document.getElementById('liveIndicator');
+    if (ind) ind.style.color = 'rgba(109,191,103,0.8)';
+
+    _resChannel = _supabase
+      .channel('floor-sync-' + _resDate + '-' + _resTime.replace(':',''))
+      .on('postgres_changes', {
+        event:  '*',
+        schema: 'public',
+        table:  'reservations',
+        filter: 'reservation_date=eq.' + _resDate
+      }, async (payload) => {
+        const row = payload.new || payload.old || {};
+        const rowTime = (row.reservation_time || '').slice(0, 5);
+        const ourTime = (_resTime || '').slice(0, 5);
+        if (rowTime && rowTime !== ourTime) return;
+        await refreshFloorMap();
+      })
+      .subscribe();
+  }
+
+  function stopRealtimeSync() {
+    if (_resChannel) {
+      _supabase.removeChannel(_resChannel);
+      _resChannel = null;
+    }
+    const dot = document.getElementById('liveDot');
+    if (dot) { dot.style.background = 'rgba(184,124,90,0.4)'; dot.style.boxShadow = ''; }
+    const ind = document.getElementById('liveIndicator');
+    if (ind) ind.style.color = 'rgba(184,124,90,0.5)';
+  }
+
+  async function refreshFloorMap() {
+    const { data, error } = await _supabase.rpc('get_available_tables', {
+      p_date:        _resDate,
+      p_time:        _resTime,
+      p_guest_count: guests
+    });
+    if (error) return;
+
+    _tableUUIDMap = {};
+    const availableNumbers = [];
+    (data || []).forEach(t => {
+      _tableUUIDMap[t.table_number] = t.id;
+      availableNumbers.push(t.table_number);
+    });
+    applyResAvailability(availableNumbers);
+
+    // If the customer's selected table just became unavailable, warn them
+    if (resSelectedTable && resSelectedTable.dataset.avail === '0') {
+      resSelectedTable = null;
+      resSelectedTableData = null;
+      document.getElementById('tablePickBar').style.display = 'none';
+      const notice = document.getElementById('rtNotice');
+      if (notice) {
+        notice.style.display = 'block';
+        clearTimeout(notice._hideTimer);
+        notice._hideTimer = setTimeout(() => { notice.style.display = 'none'; }, 6000);
+      }
+    }
   }
 
   function resGoStep1() { showResStep('resStep1'); setProgress(1); }
