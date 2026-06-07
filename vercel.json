@@ -1,12 +1,8 @@
 {
   "version": 2,
-  "installCommand": "",
-  "buildCommand": "",
+  "buildCommand": "echo 'no build needed'",
   "outputDirectory": ".",
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
