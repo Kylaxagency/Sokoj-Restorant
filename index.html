@@ -3331,161 +3331,94 @@
   });
 </script>
 
-<!-- ── CURSOR AURA ── -->
-<style>
-  #cursor-aura {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 380px;
-    height: 380px;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    background: radial-gradient(circle, rgba(184,124,90,0.13) 0%, rgba(184,124,90,0.06) 35%, transparent 70%);
-    transform: translate(-50%, -50%);
-    transition: opacity 0.6s ease;
-    will-change: transform;
-    filter: blur(18px);
-  }
-</style>
-<div id="cursor-aura"></div>
-<script>
-  (function () {
-    /* Disable on touch devices */
-    if (window.matchMedia('(hover: none)').matches) return;
-
-    const aura = document.getElementById('cursor-aura');
-    let mouseX = -1000, mouseY = -1000;
-    let currentX = -1000, currentY = -1000;
-    let visible = false;
-
-    document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      if (!visible) {
-        aura.style.opacity = '1';
-        visible = true;
-      }
-    }, { passive: true });
-
-    document.addEventListener('mouseleave', () => {
-      aura.style.opacity = '0';
-      visible = false;
-    });
-
-    const ease = 0.075;
-
-    function loop() {
-      currentX += (mouseX - currentX) * ease;
-      currentY += (mouseY - currentY) * ease;
-      aura.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
-      requestAnimationFrame(loop);
-    }
-
-    aura.style.opacity = '0';
-    loop();
-  })();
-</script>
-
 <!-- ── CURSOR SPARKLE TRAIL ── -->
-<style>
-  .spark {
-    position: fixed;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 10000;
-    transform: translate(-50%, -50%) scale(1);
-    will-change: transform, opacity;
-  }
-</style>
 <script>
   (function () {
+    /* No effect on touch / mobile devices */
     if (window.matchMedia('(hover: none)').matches) return;
 
-    /* Copper palette — matches --copper and --copper-light exactly */
-    const COLORS = [
-      'rgba(184,124,90,VAL)',
-      'rgba(212,160,130,VAL)',
-      'rgba(245,220,195,VAL)',
-      'rgba(184,124,90,VAL)',
+    /*
+      Copper palette only — pulled directly from the site's CSS variables.
+      --copper      #b87c5a  →  184, 124, 90
+      --copper-light #d4a082  →  212, 160, 130
+      warm highlight           245, 220, 195
+    */
+    const SHADES = [
+      [184, 124,  90],
+      [212, 160, 130],
+      [245, 220, 195],
+      [184, 124,  90],   /* weight copper more heavily */
     ];
 
-    let lastX = 0, lastY = 0, moving = false, moveTimer;
-    const particles = [];
+    /* 4-pointed star path for the "sparkle" variant */
+    const STAR_PATH =
+      'polygon(50% 0%,52% 48%,100% 50%,52% 52%,50% 100%,48% 52%,0% 50%,48% 48%)';
 
-    function rand(min, max) { return Math.random() * (max - min) + min; }
+    let lastX = 0, lastY = 0;
+    const pool = [];   /* live particles */
 
-    function spawnParticle(x, y) {
-      const el = document.createElement('div');
-      el.className = 'spark';
+    function r(min, max) { return Math.random() * (max - min) + min; }
 
-      const size   = rand(2, 6);
-      const drift  = { x: rand(-28, 28), y: rand(-28, 28) };
-      const dur    = rand(600, 1100);
-      const delay  = rand(0, 60);
-      const color  = COLORS[Math.floor(Math.random() * COLORS.length)];
-      const alpha  = rand(0.55, 1);
-      const glow   = rand(2, 7);
+    function spawn(x, y) {
+      const el      = document.createElement('div');
+      const [R,G,B] = SHADES[Math.floor(Math.random() * SHADES.length)];
+      const size    = r(1.5, 5);          /* keep it tiny */
+      const alpha   = r(0.5, 0.95);
+      const dur     = r(500, 900);        /* ms lifetime */
+      const ox      = r(-12, 12);         /* spawn scatter */
+      const oy      = r(-12, 12);
+      const dx      = r(-20, 20);         /* drift distance */
+      const dy      = r(-22, 6);          /* slight upward bias */
+      const isStar  = Math.random() < 0.3;
+      const blur    = r(0, 0.6);
+      const glow    = r(1.5, 4);
 
-      /* Occasional 4-pointed star shape via clip-path for extra sparkle */
-      const isStar = Math.random() < 0.28;
-      if (isStar) {
-        el.style.clipPath =
-          'polygon(50% 0%,53% 47%,100% 50%,53% 53%,50% 100%,47% 53%,0% 50%,47% 47%)';
-        el.style.borderRadius = '0';
-      }
+      el.style.cssText =
+        `position:fixed;` +
+        `width:${size}px;height:${size}px;` +
+        `left:${x + ox}px;top:${y + oy}px;` +
+        `border-radius:${isStar ? '0' : '50%'};` +
+        (isStar ? `clip-path:${STAR_PATH};` : '') +
+        `background:rgba(${R},${G},${B},${alpha.toFixed(2)});` +
+        `box-shadow:0 0 ${glow}px ${glow*0.5}px rgba(${R},${G},${B},${(alpha*0.55).toFixed(2)});` +
+        `filter:blur(${blur.toFixed(1)}px);` +
+        `pointer-events:none;z-index:99999;` +
+        `will-change:transform,opacity;`;
 
-      el.style.cssText += `
-        width:${size}px;
-        height:${size}px;
-        left:${x + rand(-10, 10)}px;
-        top:${y + rand(-10, 10)}px;
-        background:${color.replace('VAL', alpha.toFixed(2))};
-        box-shadow:0 0 ${glow}px ${glow / 2}px ${color.replace('VAL', (alpha * 0.6).toFixed(2))};
-        filter:blur(${rand(0, 1)}px);
-      `;
       document.body.appendChild(el);
-
-      const start = performance.now() + delay;
-      particles.push({ el, start, dur, drift, size, alpha });
+      pool.push({ el, start: performance.now(), dur, alpha, dx, dy });
     }
 
     document.addEventListener('mousemove', (e) => {
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const ddx = e.clientX - lastX;
+      const ddy = e.clientY - lastY;
+      const dist = Math.sqrt(ddx * ddx + ddy * ddy);
 
-      if (dist > 4) {
-        /* 1–3 particles per movement burst based on speed */
-        const count = dist > 20 ? 3 : dist > 10 ? 2 : 1;
-        for (let i = 0; i < count; i++) spawnParticle(e.clientX, e.clientY);
+      /* Threshold keeps it calm; 1–2 particles max per event */
+      if (dist > 5) {
+        spawn(e.clientX, e.clientY);
+        if (dist > 18) spawn(e.clientX, e.clientY);
         lastX = e.clientX;
         lastY = e.clientY;
       }
-
-      moving = true;
-      clearTimeout(moveTimer);
-      moveTimer = setTimeout(() => { moving = false; }, 80);
     }, { passive: true });
 
     function tick(now) {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        const elapsed = now - p.start;
-        if (elapsed < 0) continue;
+      for (let i = pool.length - 1; i >= 0; i--) {
+        const p = pool[i];
+        const t = Math.min((now - p.start) / p.dur, 1);
 
-        const t = Math.min(elapsed / p.dur, 1);
-        const eased = 1 - Math.pow(t, 1.8);      /* gentle fade curve */
-        const scale = (1 + t * 0.6) * (1 - t * 0.4);
+        /* Cubic ease-out for a refined, unhurried fade */
+        const fade  = 1 - t * t * t;
+        const scale = 1 + t * 0.5;
 
-        p.el.style.opacity = (eased * p.alpha).toFixed(3);
+        p.el.style.opacity   = (fade * p.alpha).toFixed(3);
         p.el.style.transform =
-          `translate(calc(-50% + ${p.drift.x * t}px), calc(-50% + ${p.drift.y * t}px)) scale(${scale.toFixed(3)})`;
+          `translate(${(p.dx * t).toFixed(2)}px,${(p.dy * t).toFixed(2)}px) scale(${scale.toFixed(3)})`;
 
         if (t >= 1) {
           p.el.remove();
-          particles.splice(i, 1);
+          pool.splice(i, 1);
         }
       }
       requestAnimationFrame(tick);
