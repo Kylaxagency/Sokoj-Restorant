@@ -378,6 +378,16 @@
           <div class="an-card cash"><div class="an-num" id="anCash">—</div><div class="an-lbl">Cash (RSD)</div></div>
           <div class="an-card card-pay"><div class="an-num" id="anCard">—</div><div class="an-lbl">Card (RSD)</div></div>
         </div>
+        <!-- Completed reservations list -->
+        <div class="an-table-wrap" id="anDailyCompletedWrap" style="display:none;">
+          <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.6);margin:1.5rem 0 0.75rem;">Completed Reservations</div>
+          <table class="an-table">
+            <thead>
+              <tr><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th></tr>
+            </thead>
+            <tbody id="anDailyCompletedBody"></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Monthly view -->
@@ -402,6 +412,16 @@
             <tbody id="anMonthlyBody">
               <tr><td colspan="9" style="text-align:center;color:rgba(245,242,236,0.2);padding:2rem;">Loading…</td></tr>
             </tbody>
+          </table>
+        </div>
+        <!-- Completed reservations list -->
+        <div class="an-table-wrap" id="anMonthlyCompletedWrap" style="display:none;">
+          <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.6);margin:1.5rem 0 0.75rem;">Completed Reservations</div>
+          <table class="an-table">
+            <thead>
+              <tr><th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th></tr>
+            </thead>
+            <tbody id="anMonthlyCompletedBody"></tbody>
           </table>
         </div>
       </div>
@@ -935,6 +955,60 @@
     if (tab === 'monthly') loadMonthlyAnalytics();
   }
 
+  /* ── COMPLETED RESERVATIONS DETAIL ── */
+  function payBadge(method) {
+    if (!method) return '<span class="an-zero">—</span>';
+    const color = method === 'cash' ? '#95d5b2' : '#82b4e0';
+    return `<span style="color:${color};font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;">${method === 'cash' ? '💵' : '💳'} ${method}</span>`;
+  }
+
+  async function loadDailyCompleted(date) {
+    const { data, error } = await _supabase
+      .from('reservations')
+      .select('customer_name, payment_method, payment_amount, reservation_time, guest_count, restaurant_tables(table_number)')
+      .eq('status', 'completed')
+      .eq('reservation_date', date)
+      .order('reservation_time');
+
+    const wrap  = document.getElementById('anDailyCompletedWrap');
+    const tbody = document.getElementById('anDailyCompletedBody');
+    if (error || !data || !data.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    tbody.innerHTML = data.map(r => `<tr>
+      <td>${(r.reservation_time || '').slice(0,5)}</td>
+      <td><strong>${esc(r.customer_name)}</strong></td>
+      <td style="color:var(--copper);">${esc(r.restaurant_tables?.table_number)}</td>
+      <td>${r.guest_count ?? '—'}</td>
+      <td>${payBadge(r.payment_method)}</td>
+      <td style="color:#6dbf67;font-weight:500;">${(r.payment_amount ?? 0).toLocaleString()}</td>
+    </tr>`).join('');
+  }
+
+  async function loadMonthlyCompleted(dateFrom, dateTo) {
+    const { data, error } = await _supabase
+      .from('reservations')
+      .select('customer_name, payment_method, payment_amount, reservation_date, reservation_time, guest_count, restaurant_tables(table_number)')
+      .eq('status', 'completed')
+      .gte('reservation_date', dateFrom)
+      .lte('reservation_date', dateTo)
+      .order('reservation_date')
+      .order('reservation_time');
+
+    const wrap  = document.getElementById('anMonthlyCompletedWrap');
+    const tbody = document.getElementById('anMonthlyCompletedBody');
+    if (error || !data || !data.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    tbody.innerHTML = data.map(r => `<tr>
+      <td>${formatDate(r.reservation_date)}</td>
+      <td>${(r.reservation_time || '').slice(0,5)}</td>
+      <td><strong>${esc(r.customer_name)}</strong></td>
+      <td style="color:var(--copper);">${esc(r.restaurant_tables?.table_number)}</td>
+      <td>${r.guest_count ?? '—'}</td>
+      <td>${payBadge(r.payment_method)}</td>
+      <td style="color:#6dbf67;font-weight:500;">${(r.payment_amount ?? 0).toLocaleString()}</td>
+    </tr>`).join('');
+  }
+
   /* ── DAILY ANALYTICS ── */
   async function loadAnalytics() {
     const date = document.getElementById('analyticsDate').value || new Date().toISOString().split('T')[0];
@@ -949,6 +1023,7 @@
     document.getElementById('anRevenue').textContent   = (data.revenue ?? 0).toLocaleString();
     document.getElementById('anCash').textContent      = (data.cash    ?? 0).toLocaleString();
     document.getElementById('anCard').textContent      = (data.card    ?? 0).toLocaleString();
+    loadDailyCompleted(date);
   }
 
   /* ── MONTHLY ANALYTICS ── */
@@ -1019,6 +1094,11 @@
       <td>${(t.cash ?? 0).toLocaleString()}</td>
       <td>${(t.card ?? 0).toLocaleString()}</td>
     </tr>`;
+
+    // Load completed reservations list for the month
+    const dateFrom = new Date(year, month - 1, 1).toISOString().split('T')[0];
+    const dateTo   = new Date(year, month, 0).toISOString().split('T')[0];
+    loadMonthlyCompleted(dateFrom, dateTo);
   }
 
   /* ── PDF EXPORT ── */
