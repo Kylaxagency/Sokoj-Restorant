@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -19,13 +20,15 @@
     --cream: #ede9e0;
     --serif: 'Georgia', serif;
     --sans: system-ui, -apple-system, sans-serif;
+    --green: #6dbf67;
+    --blue: #82b4e0;
+    --red: #e07070;
+    --purple: #c49de0;
   }
   body { font-family: var(--sans); background: var(--warm-black); color: var(--ivory); min-height: 100vh; }
 
   /* ── LOGIN ── */
-  #loginScreen {
-    display: flex; align-items: center; justify-content: center; min-height: 100vh;
-  }
+  #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
   .login-box {
     background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.2);
     padding: 3rem 2.5rem; width: 360px; text-align: center;
@@ -48,7 +51,6 @@
 
   /* ── DASHBOARD ── */
   #dashboard { display: none; }
-
   header {
     background: var(--charcoal); border-bottom: 0.5px solid rgba(184,124,90,0.2);
     padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
@@ -61,32 +63,118 @@
   .admin-email { font-size: 0.7rem; color: rgba(245,242,236,0.4); letter-spacing: 0.05em; }
   .btn-logout { background: none; border: 0.5px solid rgba(245,242,236,0.2); color: rgba(245,242,236,0.5); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.4rem 0.9rem; cursor: pointer; }
   .btn-logout:hover { border-color: var(--copper); color: var(--copper); }
+  .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 
-  .main { padding: 2rem; max-width: 1300px; margin: 0 auto; }
-
-  /* Stats */
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
-  .stat-card {
-    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.15);
-    padding: 1.5rem; text-align: center;
+  /* KPI Cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .kpi {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.12);
+    padding: 1.2rem 0.8rem; text-align: center;
   }
-  .stat-card .num { font-family: var(--serif); font-size: 2.5rem; font-weight: 300; color: var(--copper); }
-  .stat-card .lbl { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(245,242,236,0.4); margin-top: 0.3rem; }
+  .kpi .kpi-num { font-family: var(--serif); font-size: 1.6rem; font-weight: 300; }
+  .kpi .kpi-lbl { font-size: 0.55rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(245,242,236,0.35); margin-top: 0.2rem; }
+  .kpi-revenue .kpi-num { color: var(--green); }
+  .kpi-copper  .kpi-num { color: var(--copper); }
+  .kpi-noshow  .kpi-num { color: var(--purple); }
 
-  /* Quick filters */
+  /* Section panels */
+  .panel {
+    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.12);
+    padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.75rem;
+  }
+  .panel-title { font-family: var(--serif); font-size: 1rem; font-weight: 300; color: var(--ivory); }
+  .panel-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .panel-controls input, .panel-controls select {
+    padding: 0.35rem 0.7rem; background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
+    font-size: 0.75rem; outline: none;
+  }
+  .panel-controls input:focus, .panel-controls select:focus { border-color: var(--copper); }
+
+  /* Tabs + buttons */
+  .tab-group { display: flex; gap: 0; border: 0.5px solid rgba(184,124,90,0.2); }
+  .tab-btn {
+    padding: 0.3rem 0.9rem; background: none; border: none;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,242,236,0.4); cursor: pointer; transition: all 0.15s;
+  }
+  .tab-btn.active, .tab-btn:hover { background: rgba(184,124,90,0.12); color: var(--copper); }
+  .btn-sm {
+    padding: 0.35rem 0.8rem; background: none;
+    border: 0.5px solid rgba(184,124,90,0.4); color: var(--copper);
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .btn-sm:hover { background: rgba(184,124,90,0.1); }
+
+  /* Analytics stat grid */
+  .an-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+  .an-stat { text-align: center; padding: 0.8rem 0.4rem; }
+  .an-val { font-family: var(--serif); font-size: 1.5rem; font-weight: 300; color: var(--copper); }
+  .an-lbl { font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245,242,236,0.3); margin-top: 0.15rem; }
+  .an-val.green  { color: var(--green); }
+  .an-val.blue   { color: var(--blue); }
+  .an-val.purple { color: var(--purple); }
+  .an-val.red    { color: var(--red); }
+
+  /* Payment breakdown */
+  .pay-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  .pay-card {
+    border: 0.5px solid rgba(184,124,90,0.1); padding: 1rem; text-align: center;
+  }
+  .pay-card h4 {
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,242,236,0.35); margin-bottom: 0.6rem;
+  }
+  .pay-card .pay-big { font-family: var(--serif); font-size: 1.8rem; font-weight: 300; }
+  .pay-card .pay-detail { font-size: 0.7rem; color: rgba(245,242,236,0.35); margin-top: 0.3rem; }
+  .pay-card .pay-pct { font-size: 0.65rem; letter-spacing: 0.1em; margin-top: 0.3rem; }
+  .pay-bar { height: 4px; border-radius: 2px; margin-top: 0.5rem; background: rgba(255,255,255,0.05); }
+  .pay-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+  /* Charts */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  .chart-box { background: rgba(0,0,0,0.15); border: 0.5px solid rgba(184,124,90,0.08); padding: 1rem; min-height: 200px; position: relative; }
+  .chart-box h4 {
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,242,236,0.3); margin-bottom: 0.8rem;
+  }
+
+  /* Completed transactions table */
+  .tx-wrap { overflow-x: auto; margin-top: 1rem; }
+  .tx-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .tx-table thead th {
+    text-align: left; padding: 0.55rem 0.7rem;
+    font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(245,242,236,0.28); border-bottom: 0.5px solid rgba(184,124,90,0.12);
+  }
+  .tx-table tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.03); }
+  .tx-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .tx-table tbody td { padding: 0.5rem 0.7rem; color: rgba(245,242,236,0.7); }
+  .tx-total td { border-top: 0.5px solid rgba(184,124,90,0.2); color: var(--copper); font-weight: 500; }
+
+  /* Report filter pills */
+  .report-filters { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .rf-btn {
+    padding: 0.3rem 0.8rem; background: none;
+    border: 0.5px solid rgba(245,242,236,0.1); color: rgba(245,242,236,0.4);
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer;
+  }
+  .rf-btn.active, .rf-btn:hover { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.06); }
+
+  /* Reservations list (existing) */
   .quick-filters { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
   .qf-btn {
     padding: 0.4rem 1rem; background: none;
     border: 0.5px solid rgba(245,242,236,0.12); color: rgba(245,242,236,0.5);
     font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer;
-    transition: all 0.15s;
   }
   .qf-btn:hover, .qf-btn.active { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.08); }
-
-  /* Filters */
-  .filters {
-    display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;
-  }
+  .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
   .filters input, .filters select {
     padding: 0.6rem 0.9rem; background: var(--charcoal);
     border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
@@ -100,8 +188,6 @@
     font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
   }
   .filter-btn:hover { background: rgba(184,124,90,0.1); }
-
-  /* Table */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   thead th {
@@ -113,8 +199,6 @@
   tbody tr:hover { background: rgba(255,255,255,0.025); }
   tbody td { padding: 0.9rem 1rem; color: rgba(245,242,236,0.85); }
   tbody td.muted { color: rgba(245,242,236,0.35); font-size: 0.8rem; }
-
-  /* Status badges */
   .status {
     display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px;
     font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
@@ -124,13 +208,10 @@
   .status-cancelled { background: rgba(180,60,60,0.15);  color: #e07070; border: 0.5px solid rgba(180,60,60,0.3); }
   .status-completed { background: rgba(100,100,100,0.15);color: #aaa;    border: 0.5px solid rgba(100,100,100,0.3); }
   .status-no_show   { background: rgba(120,60,180,0.15); color: #c49de0; border: 0.5px solid rgba(120,60,180,0.3); }
-
-  /* Action buttons */
   .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .act-btn {
     padding: 0.3rem 0.65rem; font-size: 0.65rem; letter-spacing: 0.1em;
     text-transform: uppercase; border: 0.5px solid; cursor: pointer; background: none;
-    transition: all 0.15s;
   }
   .act-confirm  { border-color: rgba(45,106,79,0.5);  color: #95d5b2; }
   .act-confirm:hover  { background: rgba(45,106,79,0.15); }
@@ -142,7 +223,6 @@
   .act-noshow:hover   { background: rgba(120,60,180,0.1); }
   .act-delete   { border-color: rgba(255,255,255,0.1); color: rgba(245,242,236,0.3); }
   .act-delete:hover   { border-color: rgba(180,60,60,0.4); color: #e07070; }
-
   .empty-state { text-align: center; padding: 4rem; color: rgba(245,242,236,0.2); font-style: italic; }
 
   /* Detail modal */
@@ -162,76 +242,6 @@
   .detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: rgba(245,242,236,0.4); font-size: 1.2rem; cursor: pointer; }
   .detail-close:hover { color: var(--copper); }
 
-  /* Analytics tabs */
-  .an-tabs { display: flex; gap: 0; border: 0.5px solid rgba(184,124,90,0.2); }
-  .an-tab {
-    padding: 0.35rem 1rem; background: none; border: none;
-    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: rgba(245,242,236,0.4); cursor: pointer; transition: all 0.15s;
-  }
-  .an-tab.active, .an-tab:hover { background: rgba(184,124,90,0.12); color: var(--copper); }
-
-  /* PDF button */
-  .btn-pdf {
-    padding: 0.4rem 1rem; background: none;
-    border: 0.5px solid rgba(184,124,90,0.4); color: var(--copper);
-    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
-    transition: all 0.15s; white-space: nowrap;
-  }
-  .btn-pdf:hover { background: rgba(184,124,90,0.1); }
-
-  /* Monthly breakdown table */
-  .an-table-wrap { overflow-x: auto; margin-top: 1.5rem; }
-  .an-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  .an-table thead th {
-    text-align: left; padding: 0.6rem 0.8rem;
-    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: rgba(245,242,236,0.3); border-bottom: 0.5px solid rgba(184,124,90,0.15);
-  }
-  .an-table tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.03); }
-  .an-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-  .an-table tbody td { padding: 0.55rem 0.8rem; color: rgba(245,242,236,0.75); }
-  .an-table tbody td.an-zero { color: rgba(245,242,236,0.2); }
-  .an-table tbody tr.an-total-row td {
-    border-top: 0.5px solid rgba(184,124,90,0.25); color: var(--copper);
-    font-weight: 500; padding-top: 0.8rem;
-  }
-
-  /* Analytics */
-  .analytics-section {
-    background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.15);
-    padding: 1.5rem; margin-bottom: 2rem;
-  }
-  .analytics-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.75rem;
-  }
-  .analytics-header h3 {
-    font-family: var(--serif); font-size: 1rem; font-weight: 300; color: var(--ivory);
-  }
-  .analytics-header input[type=date],
-  .analytics-header select {
-    padding: 0.4rem 0.8rem; background: rgba(255,255,255,0.04);
-    border: 0.5px solid rgba(245,242,236,0.12); color: var(--ivory);
-    font-size: 0.8rem; outline: none;
-  }
-  .analytics-header input[type=date]:focus,
-  .analytics-header select:focus { border-color: var(--copper); }
-  .analytics-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;
-  }
-  .an-card { text-align: center; padding: 1rem 0.5rem; }
-  .an-card .an-num {
-    font-family: var(--serif); font-size: 1.8rem; font-weight: 300; color: var(--copper);
-  }
-  .an-card .an-lbl {
-    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
-    color: rgba(245,242,236,0.35); margin-top: 0.25rem;
-  }
-  .an-card.revenue .an-num { color: #6dbf67; }
-  .an-card.cash    .an-num { color: #95d5b2; }
-  .an-card.card-pay .an-num { color: #82b4e0; }
-
   /* Payment modal */
   .pay-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
@@ -242,26 +252,20 @@
     background: var(--charcoal); border: 0.5px solid rgba(184,124,90,0.3);
     padding: 2rem; width: 400px; max-width: 95vw;
   }
-  .pay-box h3 {
-    font-family: var(--serif); font-size: 1.2rem; font-weight: 300;
-    color: var(--ivory); margin-bottom: 0.4rem;
-  }
-  .pay-box p { font-size: 0.75rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; letter-spacing: 0.05em; }
+  .pay-box h3 { font-family: var(--serif); font-size: 1.2rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.4rem; }
+  .pay-box p  { font-size: 0.75rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; }
   .pay-methods { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
   .pay-method-btn {
     flex: 1; padding: 0.9rem; background: none;
     border: 0.5px solid rgba(245,242,236,0.15); color: rgba(245,242,236,0.5);
-    font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
-    cursor: pointer; transition: all 0.15s;
+    font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
   }
-  .pay-method-btn.active {
-    border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.1);
-  }
-  .pay-amount-label {
+  .pay-method-btn.active { border-color: var(--copper); color: var(--copper); background: rgba(184,124,90,0.1); }
+  .pay-amount-wrap { position: relative; margin-bottom: 1.5rem; }
+  .pay-amount-wrap label {
     font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
     color: rgba(245,242,236,0.4); margin-bottom: 0.5rem; display: block;
   }
-  .pay-amount-wrap { position: relative; margin-bottom: 1.5rem; }
   .pay-amount-wrap input {
     width: 100%; padding: 0.85rem 3.5rem 0.85rem 1rem;
     background: rgba(255,255,255,0.04); border: 0.5px solid rgba(245,242,236,0.15);
@@ -269,20 +273,20 @@
   }
   .pay-amount-wrap input:focus { border-color: var(--copper); }
   .pay-amount-wrap span {
-    position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
-    font-size: 0.75rem; color: rgba(245,242,236,0.35); letter-spacing: 0.1em;
+    position: absolute; right: 1rem; bottom: 0.85rem;
+    font-size: 0.75rem; color: rgba(245,242,236,0.35);
   }
   .pay-actions { display: flex; gap: 0.75rem; }
   .pay-actions button {
     flex: 1; padding: 0.85rem; font-size: 0.7rem; letter-spacing: 0.2em;
-    text-transform: uppercase; border: 0.5px solid; cursor: pointer; transition: all 0.15s;
+    text-transform: uppercase; border: 0.5px solid; cursor: pointer;
   }
-  .pay-btn-cancel { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.4); }
-  .pay-btn-cancel:hover { border-color: rgba(245,242,236,0.3); color: var(--ivory); }
+  .pay-btn-cancel  { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.4); }
+  .pay-btn-cancel:hover  { border-color: rgba(245,242,236,0.3); color: var(--ivory); }
   .pay-btn-confirm { background: var(--copper); border-color: var(--copper); color: #fff; }
-  .pay-btn-confirm:hover { background: var(--copper-light); border-color: var(--copper-light); }
+  .pay-btn-confirm:hover { background: var(--copper-light); }
 
-  /* Cancel confirm modal */
+  /* Cancel modal */
   .cancel-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
     z-index: 300; align-items: center; justify-content: center;
@@ -293,25 +297,19 @@
     padding: 2rem; width: 380px; max-width: 95vw; text-align: center;
   }
   .cancel-box .cancel-icon { font-size: 2rem; margin-bottom: 1rem; }
-  .cancel-box h3 {
-    font-family: var(--serif); font-size: 1.1rem; font-weight: 300;
-    color: var(--ivory); margin-bottom: 0.5rem;
-  }
-  .cancel-box p { font-size: 0.8rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; }
+  .cancel-box h3 { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--ivory); margin-bottom: 0.5rem; }
+  .cancel-box p  { font-size: 0.8rem; color: rgba(245,242,236,0.4); margin-bottom: 1.5rem; }
   .cancel-actions { display: flex; gap: 0.75rem; }
   .cancel-actions button {
     flex: 1; padding: 0.8rem; font-size: 0.7rem; letter-spacing: 0.2em;
-    text-transform: uppercase; border: 0.5px solid; cursor: pointer; transition: all 0.15s;
+    text-transform: uppercase; border: 0.5px solid; cursor: pointer;
   }
-  .cancel-btn-back   { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.5); }
-  .cancel-btn-back:hover   { border-color: rgba(245,242,236,0.3); }
+  .cancel-btn-back    { background: none; border-color: rgba(245,242,236,0.15); color: rgba(245,242,236,0.5); }
   .cancel-btn-confirm { background: rgba(180,60,60,0.2); border-color: rgba(180,60,60,0.5); color: #e07070; }
   .cancel-btn-confirm:hover { background: rgba(180,60,60,0.3); }
 
-  @media (max-width: 768px) {
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    .main { padding: 1rem; }
-  }
+  @media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } .chart-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 768px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .main { padding: 1rem; } .pay-breakdown { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -340,94 +338,133 @@
   </header>
 
   <div class="main">
-    <!-- Stats -->
-    <div class="stats">
-      <div class="stat-card"><div class="num" id="statTotal">—</div><div class="lbl">Total</div></div>
-      <div class="stat-card"><div class="num" id="statToday">—</div><div class="lbl">Today</div></div>
-      <div class="stat-card"><div class="num" id="statPending">—</div><div class="lbl">Pending</div></div>
-      <div class="stat-card"><div class="num" id="statConfirmed">—</div><div class="lbl">Confirmed</div></div>
+
+    <!-- ═══ KPI Cards ═══ -->
+    <div class="kpi-grid">
+      <div class="kpi kpi-revenue"><div class="kpi-num" id="kpiRevToday">—</div><div class="kpi-lbl">Revenue Today</div></div>
+      <div class="kpi kpi-revenue"><div class="kpi-num" id="kpiRevMonth">—</div><div class="kpi-lbl">Revenue This Month</div></div>
+      <div class="kpi kpi-copper"><div class="kpi-num" id="kpiCompToday">—</div><div class="kpi-lbl">Completed Today</div></div>
+      <div class="kpi kpi-copper"><div class="kpi-num" id="kpiCompMonth">—</div><div class="kpi-lbl">Completed Month</div></div>
+      <div class="kpi kpi-noshow"><div class="kpi-num" id="kpiNoShow">—</div><div class="kpi-lbl">No-Shows Month</div></div>
+      <div class="kpi kpi-copper"><div class="kpi-num" id="kpiAvgSpend">—</div><div class="kpi-lbl">Avg Spend / Res.</div></div>
     </div>
 
-    <!-- Analytics -->
-    <div class="analytics-section">
-      <div class="analytics-header">
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-          <h3>Analytics</h3>
-          <div class="an-tabs">
-            <button class="an-tab active" id="tabDaily"   onclick="switchAnalyticsTab('daily')">Daily</button>
-            <button class="an-tab"        id="tabMonthly" onclick="switchAnalyticsTab('monthly')">Monthly</button>
+    <!-- ═══ Analytics Panel ═══ -->
+    <div class="panel">
+      <div class="panel-header">
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <span class="panel-title">Analytics</span>
+          <div class="tab-group">
+            <button class="tab-btn active" id="tabDaily"   onclick="switchTab('daily')">Daily</button>
+            <button class="tab-btn"        id="tabMonthly" onclick="switchTab('monthly')">Monthly</button>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-          <input type="date"   id="analyticsDate"  onchange="loadAnalytics()" style="display:block;">
-          <select id="analyticsMonth" onchange="loadMonthlyAnalytics()" style="display:none;"></select>
-          <select id="analyticsYear"  onchange="loadMonthlyAnalytics()" style="display:none;"></select>
-          <button class="btn-pdf" onclick="downloadPDF()">↓ Download PDF</button>
+        <div class="panel-controls">
+          <input type="date" id="anDate" onchange="loadAnalyticsView()">
+          <select id="anMonth" onchange="loadAnalyticsView()" style="display:none;"></select>
+          <select id="anYear"  onchange="loadAnalyticsView()" style="display:none;"></select>
+          <button class="btn-sm" onclick="downloadPDF()">↓ PDF</button>
         </div>
       </div>
 
+      <!-- Report filter pills -->
+      <div class="report-filters" id="reportFilters" style="display:none;">
+        <button class="rf-btn active" onclick="setReportRange('today',this)">Today</button>
+        <button class="rf-btn" onclick="setReportRange('7d',this)">Last 7 Days</button>
+        <button class="rf-btn" onclick="setReportRange('month',this)">This Month</button>
+        <button class="rf-btn" onclick="setReportRange('prev',this)">Prev Month</button>
+        <button class="rf-btn" onclick="setReportRange('custom',this)">Custom</button>
+        <input type="date" id="rfFrom" style="display:none;" onchange="loadAnalyticsView()">
+        <input type="date" id="rfTo"   style="display:none;" onchange="loadAnalyticsView()">
+      </div>
+
       <!-- Daily view -->
-      <div id="anDailyView">
-        <div class="analytics-grid">
-          <div class="an-card"><div class="an-num" id="anTotal">—</div><div class="an-lbl">Bookings</div></div>
-          <div class="an-card"><div class="an-num" id="anCompleted">—</div><div class="an-lbl">Completed</div></div>
-          <div class="an-card"><div class="an-num" id="anPending">—</div><div class="an-lbl">Pending</div></div>
-          <div class="an-card"><div class="an-num" id="anNoShow">—</div><div class="an-lbl">No Show</div></div>
-          <div class="an-card"><div class="an-num" id="anGuests">—</div><div class="an-lbl">Guests</div></div>
-          <div class="an-card revenue"><div class="an-num" id="anRevenue">—</div><div class="an-lbl">Revenue (RSD)</div></div>
-          <div class="an-card cash"><div class="an-num" id="anCash">—</div><div class="an-lbl">Cash (RSD)</div></div>
-          <div class="an-card card-pay"><div class="an-num" id="anCard">—</div><div class="an-lbl">Card (RSD)</div></div>
+      <div id="viewDaily">
+        <div class="an-grid">
+          <div class="an-stat"><div class="an-val" id="dCompleted">—</div><div class="an-lbl">Completed</div></div>
+          <div class="an-stat"><div class="an-val green" id="dRevenue">—</div><div class="an-lbl">Total Revenue</div></div>
+          <div class="an-stat"><div class="an-val green" id="dCash">—</div><div class="an-lbl">Cash Revenue</div></div>
+          <div class="an-stat"><div class="an-val blue" id="dCard">—</div><div class="an-lbl">Card Revenue</div></div>
+          <div class="an-stat"><div class="an-val" id="dAvg">—</div><div class="an-lbl">Avg Spend</div></div>
+          <div class="an-stat"><div class="an-val purple" id="dNoShow">—</div><div class="an-lbl">No-Shows</div></div>
+          <div class="an-stat"><div class="an-val red" id="dCancelled">—</div><div class="an-lbl">Cancelled</div></div>
         </div>
-        <!-- Completed reservations list -->
-        <div class="an-table-wrap" id="anDailyCompletedWrap" style="display:none;">
-          <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.6);margin:1.5rem 0 0.75rem;">Completed Reservations</div>
-          <table class="an-table">
-            <thead>
-              <tr><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th></tr>
-            </thead>
-            <tbody id="anDailyCompletedBody"></tbody>
-          </table>
+        <div class="pay-breakdown">
+          <div class="pay-card">
+            <h4>💵 Cash</h4>
+            <div class="pay-big green" id="dCashAmt">0</div>
+            <div class="pay-detail"><span id="dCashCount">0</span> reservations</div>
+            <div class="pay-pct" id="dCashPct" style="color:var(--green);">0%</div>
+            <div class="pay-bar"><div class="pay-bar-fill" id="dCashBar" style="width:0%;background:var(--green);"></div></div>
+          </div>
+          <div class="pay-card">
+            <h4>💳 Card</h4>
+            <div class="pay-big blue" id="dCardAmt">0</div>
+            <div class="pay-detail"><span id="dCardCount">0</span> reservations</div>
+            <div class="pay-pct" id="dCardPct" style="color:var(--blue);">0%</div>
+            <div class="pay-bar"><div class="pay-bar-fill" id="dCardBar" style="width:0%;background:var(--blue);"></div></div>
+          </div>
+        </div>
+        <div class="tx-wrap" id="dTxWrap" style="display:none;">
+          <div style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.5);margin:1.2rem 0 0.6rem;">Transaction Records</div>
+          <table class="tx-table"><thead><tr>
+            <th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
+          </tr></thead><tbody id="dTxBody"></tbody></table>
         </div>
       </div>
 
       <!-- Monthly view -->
-      <div id="anMonthlyView" style="display:none;">
-        <div class="analytics-grid">
-          <div class="an-card"><div class="an-num" id="manTotal">—</div><div class="an-lbl">Bookings</div></div>
-          <div class="an-card"><div class="an-num" id="manCompleted">—</div><div class="an-lbl">Completed</div></div>
-          <div class="an-card"><div class="an-num" id="manNoShow">—</div><div class="an-lbl">No Show</div></div>
-          <div class="an-card"><div class="an-num" id="manGuests">—</div><div class="an-lbl">Guests</div></div>
-          <div class="an-card revenue"><div class="an-num" id="manRevenue">—</div><div class="an-lbl">Revenue (RSD)</div></div>
-          <div class="an-card cash"><div class="an-num" id="manCash">—</div><div class="an-lbl">Cash (RSD)</div></div>
-          <div class="an-card card-pay"><div class="an-num" id="manCard">—</div><div class="an-lbl">Card (RSD)</div></div>
+      <div id="viewMonthly" style="display:none;">
+        <div class="an-grid">
+          <div class="an-stat"><div class="an-val" id="mCompleted">—</div><div class="an-lbl">Completed</div></div>
+          <div class="an-stat"><div class="an-val green" id="mRevenue">—</div><div class="an-lbl">Total Revenue</div></div>
+          <div class="an-stat"><div class="an-val green" id="mCash">—</div><div class="an-lbl">Cash Revenue</div></div>
+          <div class="an-stat"><div class="an-val blue" id="mCard">—</div><div class="an-lbl">Card Revenue</div></div>
+          <div class="an-stat"><div class="an-val" id="mAvg">—</div><div class="an-lbl">Avg Spend</div></div>
+          <div class="an-stat"><div class="an-val purple" id="mNoShow">—</div><div class="an-lbl">No-Shows</div></div>
+          <div class="an-stat"><div class="an-val red" id="mCancelled">—</div><div class="an-lbl">Cancelled</div></div>
         </div>
-        <div class="an-table-wrap">
-          <table class="an-table">
-            <thead>
-              <tr>
-                <th>Date</th><th>Bookings</th><th>Completed</th><th>Cancelled</th>
-                <th>No Show</th><th>Guests</th><th>Revenue (RSD)</th><th>Cash</th><th>Card</th>
-              </tr>
-            </thead>
-            <tbody id="anMonthlyBody">
-              <tr><td colspan="9" style="text-align:center;color:rgba(245,242,236,0.2);padding:2rem;">Loading…</td></tr>
-            </tbody>
-          </table>
+        <div class="pay-breakdown">
+          <div class="pay-card">
+            <h4>💵 Cash</h4>
+            <div class="pay-big green" id="mCashAmt">0</div>
+            <div class="pay-detail"><span id="mCashCount">0</span> reservations</div>
+            <div class="pay-pct" id="mCashPct" style="color:var(--green);">0%</div>
+            <div class="pay-bar"><div class="pay-bar-fill" id="mCashBar" style="width:0%;background:var(--green);"></div></div>
+          </div>
+          <div class="pay-card">
+            <h4>💳 Card</h4>
+            <div class="pay-big blue" id="mCardAmt">0</div>
+            <div class="pay-detail"><span id="mCardCount">0</span> reservations</div>
+            <div class="pay-pct" id="mCardPct" style="color:var(--blue);">0%</div>
+            <div class="pay-bar"><div class="pay-bar-fill" id="mCardBar" style="width:0%;background:var(--blue);"></div></div>
+          </div>
         </div>
-        <!-- Completed reservations list -->
-        <div class="an-table-wrap" id="anMonthlyCompletedWrap" style="display:none;">
-          <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.6);margin:1.5rem 0 0.75rem;">Completed Reservations</div>
-          <table class="an-table">
-            <thead>
-              <tr><th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th></tr>
-            </thead>
-            <tbody id="anMonthlyCompletedBody"></tbody>
-          </table>
+        <!-- Charts -->
+        <div class="chart-grid">
+          <div class="chart-box"><h4>Revenue Trend</h4><canvas id="chartRevenue"></canvas></div>
+          <div class="chart-box"><h4>Completed Reservations</h4><canvas id="chartCompleted"></canvas></div>
+          <div class="chart-box"><h4>Payment Method Distribution</h4><canvas id="chartPayMethod"></canvas></div>
+          <div class="chart-box"><h4>No-Show Trend</h4><canvas id="chartNoShow"></canvas></div>
+        </div>
+        <!-- Day breakdown table -->
+        <div class="tx-wrap" style="margin-top:1.5rem;">
+          <div style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.5);margin-bottom:0.6rem;">Daily Breakdown</div>
+          <table class="tx-table"><thead><tr>
+            <th>Date</th><th>Completed</th><th>Revenue</th><th>Cash</th><th>Card</th><th>No Show</th><th>Cancelled</th>
+          </tr></thead><tbody id="mDayBody"></tbody></table>
+        </div>
+        <!-- Transaction records -->
+        <div class="tx-wrap" id="mTxWrap" style="display:none;">
+          <div style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(184,124,90,0.5);margin:1.2rem 0 0.6rem;">Transaction Records</div>
+          <table class="tx-table"><thead><tr>
+            <th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
+          </tr></thead><tbody id="mTxBody"></tbody></table>
         </div>
       </div>
     </div>
 
-    <!-- Quick filters -->
+    <!-- ═══ Reservations Management ═══ -->
     <div class="quick-filters">
       <button class="qf-btn active" onclick="quickFilter('all',this)">All</button>
       <button class="qf-btn" onclick="quickFilter('today',this)">Today</button>
@@ -438,8 +475,6 @@
       <button class="qf-btn" onclick="quickFilter('completed',this)">Completed</button>
       <button class="qf-btn" onclick="quickFilter('no_show',this)">No Show</button>
     </div>
-
-    <!-- Search + filters -->
     <div class="filters">
       <input type="text"  id="filterSearch" class="filter-search" placeholder="Search name, email, phone, table…" oninput="debounceLoad()">
       <input type="date"  id="filterDate" onchange="loadReservations()">
@@ -454,25 +489,12 @@
       <button class="filter-btn" onclick="clearFilters()">Clear</button>
       <button class="filter-btn" onclick="loadAll()" style="margin-left:auto;">↻ Refresh</button>
     </div>
-
-    <!-- Reservations table -->
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th>Guest</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Table</th>
-            <th>Guests</th>
-            <th>Contact</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="resBody">
-          <tr><td colspan="8" class="empty-state">Loading…</td></tr>
-        </tbody>
+        <thead><tr>
+          <th>Guest</th><th>Date</th><th>Time</th><th>Table</th><th>Guests</th><th>Contact</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="resBody"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -487,12 +509,12 @@
       <button class="pay-method-btn active" id="payBtnCash" onclick="selectPayMethod('cash')">💵 Cash</button>
       <button class="pay-method-btn"        id="payBtnCard" onclick="selectPayMethod('card')">💳 Card</button>
     </div>
-    <label class="pay-amount-label">Amount paid</label>
     <div class="pay-amount-wrap">
-      <input type="number" id="payAmount" placeholder="0" min="0">
+      <label>Amount paid</label>
+      <input type="number" id="payAmount" placeholder="0" min="1">
       <span>RSD</span>
     </div>
-    <div id="payError" style="display:none;color:#e07a7a;font-size:0.75rem;margin-bottom:1rem;letter-spacing:0.04em;"></div>
+    <div id="payError" style="display:none;color:#e07a7a;font-size:0.75rem;margin-bottom:1rem;"></div>
     <div class="pay-actions">
       <button class="pay-btn-cancel"  onclick="closePayModal()">Cancel</button>
       <button class="pay-btn-confirm" id="payConfirmBtn" onclick="submitPayment()">Confirm & Complete</button>
@@ -500,7 +522,7 @@
   </div>
 </div>
 
-<!-- Cancel confirm modal -->
+<!-- Cancel modal -->
 <div class="cancel-overlay" id="cancelOverlay">
   <div class="cancel-box">
     <div class="cancel-icon">⚠️</div>
@@ -523,709 +545,609 @@
 </div>
 
 <script>
-  /* ┌─────────────────────────────────────────────────────────┐
-     │  Replace these two values with your Supabase project    │
-     │  URL and anon key from:                                 │
-     │  Supabase Dashboard → Settings → API                   │
-     └─────────────────────────────────────────────────────────┘ */
   const SUPABASE_URL  = 'https://ynnskoxgyshbwrchivxq.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlubnNrb3hneXNoYndyY2hpdnhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDAxNjEsImV4cCI6MjA5NjQxNjE2MX0.3SMXWdDgl5tsRqlAediQ-48uDWf4RE7qZzapGaEsTTE';
   const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  /* ── LIVE DATE ── */
-  function updateDate() {
-    const d = new Date();
-    document.getElementById('liveDate').textContent =
-      d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  /* ── Helpers ── */
+  function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '—'; }
+  function fmt(n) { return (n ?? 0).toLocaleString(); }
+  function fmtDate(d) { return d ? new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) : '—'; }
+  function payIcon(m) {
+    if (!m) return '—';
+    const c = m==='cash'?'var(--green)':'var(--blue)';
+    return `<span style="color:${c};font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase">${m==='cash'?'💵':'💳'} ${m}</span>`;
   }
-  updateDate();
-  setInterval(updateDate, 60000);
+  function pct(part, total) { return total > 0 ? Math.round(part/total*100) : 0; }
 
-  /* ── LOGIN (Supabase Auth) ── */
+  /* ── Live date ── */
+  function updateDate() {
+    document.getElementById('liveDate').textContent =
+      new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  }
+  updateDate(); setInterval(updateDate, 60000);
+
+  /* ══════════════════════════════════════
+     AUTH
+  ══════════════════════════════════════ */
+  let _adminEmail = '';
+
   async function login() {
     const email = document.getElementById('adminEmail').value.trim();
     const pass  = document.getElementById('adminPass').value;
-    const errEl = document.getElementById('loginError');
-    errEl.textContent = 'Signing in…';
+    const err   = document.getElementById('loginError');
+    err.textContent = 'Signing in…';
+    if (!email||!pass) { err.textContent='Enter email and password.'; return; }
 
-    if (!email || !pass) {
-      errEl.textContent = 'Please enter your email and password.';
-      return;
-    }
+    const {error:ae} = await _supabase.auth.signInWithPassword({email,password:pass});
+    if (ae) { err.textContent = ae.message.includes('Invalid login')?'Wrong email or password.':'Auth: '+ae.message; return; }
 
-    // Step 1: Authenticate with Supabase Auth
-    const { data: authData, error: authError } =
-      await _supabase.auth.signInWithPassword({ email, password: pass });
+    const {data:ar,error:re} = await _supabase.from('admins').select('role').eq('email',email).maybeSingle();
+    if (re) { await _supabase.auth.signOut(); err.textContent='Admin lookup: '+re.message; return; }
+    if (!ar){ await _supabase.auth.signOut(); err.textContent='Not an admin: '+email; return; }
 
-    if (authError) {
-      const msg = authError.message || '';
-      if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) {
-        errEl.textContent = 'Email not confirmed — check your inbox and click the confirmation link first.';
-      } else if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
-        errEl.textContent = 'Wrong email or password. Check your Supabase Auth user credentials.';
-      } else {
-        errEl.textContent = 'Auth error: ' + msg;
-      }
-      return;
-    }
-
-    // Step 2: Verify this user exists in the admins table
-    const { data: adminRow, error: adminError } =
-      await _supabase.from('admins').select('role').eq('email', email).maybeSingle();
-
-    if (adminError) {
-      await _supabase.auth.signOut();
-      errEl.textContent = 'Admin lookup failed: ' + adminError.message;
-      return;
-    }
-
-    if (!adminRow) {
-      await _supabase.auth.signOut();
-      errEl.textContent = 'Access denied — "' + email + '" is not in the admins table. Run the INSERT SQL in Supabase.';
-      return;
-    }
-
-    // Success
-    errEl.textContent = '';
-    document.getElementById('adminEmailDisplay').textContent = email + ' · ' + adminRow.role;
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    loadAll();
-    startAdminRealtime();
+    err.textContent=''; _adminEmail = email;
+    document.getElementById('adminEmailDisplay').textContent = email+' · '+ar.role;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    loadAll(); startRealtime();
   }
 
   async function logout() {
-    stopAdminRealtime();
+    stopRealtime();
     await _supabase.auth.signOut();
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('adminEmail').value = '';
-    document.getElementById('adminPass').value  = '';
-    document.getElementById('loginError').textContent = '';
-    document.getElementById('adminEmailDisplay').textContent = '';
+    document.getElementById('dashboard').style.display='none';
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('adminEmail').value='';
+    document.getElementById('adminPass').value='';
+    document.getElementById('loginError').textContent='';
+    document.getElementById('adminEmailDisplay').textContent='';
   }
 
-  // Restore session on page load
-  _supabase.auth.getSession().then(async ({ data: { session } }) => {
-    if (!session) return;
-    const { data: adminRow } = await _supabase
-      .from('admins').select('role').eq('email', session.user.email).maybeSingle();
-    if (adminRow) {
-      document.getElementById('adminEmailDisplay').textContent =
-        session.user.email + ' · ' + adminRow.role;
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      loadAll();
-      startAdminRealtime();
+  _supabase.auth.getSession().then(async({data:{session}})=>{
+    if(!session) return;
+    const{data:ar}=await _supabase.from('admins').select('role').eq('email',session.user.email).maybeSingle();
+    if(ar){
+      _adminEmail = session.user.email;
+      document.getElementById('adminEmailDisplay').textContent=session.user.email+' · '+ar.role;
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('dashboard').style.display='block';
+      loadAll(); startRealtime();
     }
   });
 
-  /* ── REALTIME + POLLING: auto-refresh dashboard when reservations change ── */
-  let _adminChannel   = null;
-  let _adminRtTimer   = null;
-  let _adminPollTimer = null;
+  /* ══════════════════════════════════════
+     REALTIME
+  ══════════════════════════════════════ */
+  let _rtChan=null, _rtTimer=null, _rtPoll=null;
 
-  function startAdminRealtime() {
-    stopAdminRealtime();
-
-    // Polling fallback: refresh every 30 s regardless of realtime status
-    _adminPollTimer = setInterval(loadAll, 30000);
-
-    _adminChannel = _supabase
-      .channel('admin-reservations-live')
-      .on('postgres_changes', {
-        event:  '*',
-        schema: 'public',
-        table:  'reservations'
-      }, () => {
-        clearTimeout(_adminRtTimer);
-        _adminRtTimer = setTimeout(loadAll, 400);
+  function startRealtime() {
+    stopRealtime();
+    _rtPoll = setInterval(loadAll, 30000);
+    _rtChan = _supabase.channel('admin-live')
+      .on('postgres_changes',{event:'*',schema:'public',table:'reservations'}, ()=>{
+        clearTimeout(_rtTimer); _rtTimer=setTimeout(loadAll,400);
       })
-      .subscribe((status) => {
-        const badge = document.getElementById('liveDate');
-        if (!badge) return;
-        if (status === 'SUBSCRIBED') {
-          badge.style.background  = '#1a3d2b';
-          badge.style.color       = '#95d5b2';
+      .on('postgres_changes',{event:'*',schema:'public',table:'completed_reservations'}, ()=>{
+        clearTimeout(_rtTimer); _rtTimer=setTimeout(loadAll,400);
+      })
+      .subscribe(s=>{
+        if(s==='SUBSCRIBED'){
+          const b=document.getElementById('liveDate');
+          if(b){b.style.background='#1a3d2b';b.style.color='#95d5b2';}
           updateDate();
         }
       });
   }
 
-  function stopAdminRealtime() {
-    if (_adminChannel) { _supabase.removeChannel(_adminChannel); _adminChannel = null; }
-    clearTimeout(_adminRtTimer);
-    clearInterval(_adminPollTimer);
-    _adminPollTimer = null;
+  function stopRealtime(){
+    if(_rtChan){_supabase.removeChannel(_rtChan);_rtChan=null;}
+    clearTimeout(_rtTimer); clearInterval(_rtPoll);
   }
 
-  /* ── LOAD ALL ── */
+  /* ══════════════════════════════════════
+     LOAD ALL
+  ══════════════════════════════════════ */
   function loadAll() {
-    loadStats();
+    loadKPIs();
+    loadAnalyticsView();
     loadReservations();
-    if (_analyticsTab === 'daily') loadAnalytics();
+  }
+
+  /* ── Init date pickers ── */
+  const _today = new Date().toISOString().split('T')[0];
+  document.getElementById('anDate').value = _today;
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  (function initPickers(){
+    const now=new Date(), ms=document.getElementById('anMonth'), ys=document.getElementById('anYear');
+    MONTHS.forEach((m,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=m;if(i===now.getMonth())o.selected=true;ms.appendChild(o);});
+    for(let y=now.getFullYear();y>=now.getFullYear()-3;y--){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o);}
+  })();
+
+  /* ══════════════════════════════════════
+     KPI CARDS
+  ══════════════════════════════════════ */
+  async function loadKPIs() {
+    const {data,error} = await _supabase.rpc('get_kpi_summary');
+    if(error||!data) return;
+    document.getElementById('kpiRevToday').textContent  = fmt(data.revenue_today)+' RSD';
+    document.getElementById('kpiRevMonth').textContent  = fmt(data.revenue_month)+' RSD';
+    document.getElementById('kpiCompToday').textContent = data.completed_today??'—';
+    document.getElementById('kpiCompMonth').textContent = data.completed_month??'—';
+    document.getElementById('kpiNoShow').textContent    = data.no_show_month??'—';
+    document.getElementById('kpiAvgSpend').textContent  = fmt(data.avg_spend)+' RSD';
+  }
+
+  /* ══════════════════════════════════════
+     ANALYTICS TABS
+  ══════════════════════════════════════ */
+  let _anTab = 'daily';
+  let _lastDaily = null, _lastMonthly = null;
+
+  function switchTab(tab) {
+    _anTab = tab;
+    document.getElementById('tabDaily').classList.toggle('active',tab==='daily');
+    document.getElementById('tabMonthly').classList.toggle('active',tab==='monthly');
+    document.getElementById('viewDaily').style.display   = tab==='daily'?'block':'none';
+    document.getElementById('viewMonthly').style.display  = tab==='monthly'?'block':'none';
+    document.getElementById('anDate').style.display       = tab==='daily'?'block':'none';
+    document.getElementById('anMonth').style.display      = tab==='monthly'?'block':'none';
+    document.getElementById('anYear').style.display       = tab==='monthly'?'block':'none';
+    document.getElementById('reportFilters').style.display= tab==='daily'?'flex':'none';
+    loadAnalyticsView();
+  }
+
+  /* ── Report range filters (daily only) ── */
+  let _rfRange = 'today';
+
+  function setReportRange(range, btn) {
+    _rfRange = range;
+    document.querySelectorAll('.rf-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const showCustom = range==='custom';
+    document.getElementById('rfFrom').style.display = showCustom?'inline-block':'none';
+    document.getElementById('rfTo').style.display   = showCustom?'inline-block':'none';
+    if (range==='today') document.getElementById('anDate').value = _today;
+    loadAnalyticsView();
+  }
+
+  function loadAnalyticsView() {
+    if (_anTab==='daily') loadDailyAnalytics();
     else loadMonthlyAnalytics();
   }
 
-  /* ── Set analytics date to today on load ── */
-  document.getElementById('analyticsDate').value = new Date().toISOString().split('T')[0];
+  /* ══════════════════════════════════════
+     DAILY ANALYTICS (from completed_reservations)
+  ══════════════════════════════════════ */
+  async function loadDailyAnalytics() {
+    const date = document.getElementById('anDate').value || _today;
+    const {data,error} = await _supabase.rpc('get_daily_analytics',{p_date:date});
+    if(error||!data) return;
+    _lastDaily = data;
+    const d = data;
+    document.getElementById('dCompleted').textContent = d.completed??0;
+    document.getElementById('dRevenue').textContent   = fmt(d.revenue)+' RSD';
+    document.getElementById('dCash').textContent       = fmt(d.cash)+' RSD';
+    document.getElementById('dCard').textContent       = fmt(d.card)+' RSD';
+    document.getElementById('dAvg').textContent        = fmt(d.avg_spend)+' RSD';
+    document.getElementById('dNoShow').textContent     = d.no_show??0;
+    document.getElementById('dCancelled').textContent  = d.cancelled??0;
 
-  /* ── STATS (uses get_dashboard_stats RPC) ── */
-  async function loadStats() {
-    const { data, error } = await _supabase.rpc('get_dashboard_stats');
-    if (error || !data) return;
-    document.getElementById('statTotal').textContent     = data.total     ?? '—';
-    document.getElementById('statToday').textContent     = data.today     ?? '—';
-    document.getElementById('statPending').textContent   = data.pending   ?? '—';
-    document.getElementById('statConfirmed').textContent = data.confirmed ?? '—';
+    // Payment breakdown
+    const total = (d.cash||0)+(d.card||0);
+    document.getElementById('dCashAmt').textContent   = fmt(d.cash)+' RSD';
+    document.getElementById('dCashCount').textContent  = d.cash_count??0;
+    document.getElementById('dCashPct').textContent    = pct(d.cash,total)+'%';
+    document.getElementById('dCashBar').style.width    = pct(d.cash,total)+'%';
+    document.getElementById('dCardAmt').textContent   = fmt(d.card)+' RSD';
+    document.getElementById('dCardCount').textContent  = d.card_count??0;
+    document.getElementById('dCardPct').textContent    = pct(d.card,total)+'%';
+    document.getElementById('dCardBar').style.width    = pct(d.card,total)+'%';
+
+    loadDailyTransactions(date);
   }
 
-  /* ── QUICK FILTERS ── */
-  const today = new Date().toISOString().split('T')[0];
+  async function loadDailyTransactions(date) {
+    const {data,error} = await _supabase
+      .from('completed_reservations')
+      .select('*')
+      .eq('reservation_date', date)
+      .order('reservation_start_time');
+    const wrap  = document.getElementById('dTxWrap');
+    const tbody = document.getElementById('dTxBody');
+    if(error||!data||!data.length) { wrap.style.display='none'; return; }
+    wrap.style.display='block';
+    let totalAmt = 0;
+    tbody.innerHTML = data.map(r=>{
+      totalAmt += r.payment_amount_rsd||0;
+      return `<tr>
+        <td>${(r.reservation_start_time||'').slice(0,5)}</td>
+        <td><strong>${esc(r.customer_name)}</strong></td>
+        <td style="color:var(--copper)">${esc(r.table_number)}</td>
+        <td>${r.guest_count}</td>
+        <td>${payIcon(r.payment_method)}</td>
+        <td style="color:var(--green);font-weight:500">${fmt(r.payment_amount_rsd)}</td>
+        <td class="muted" style="font-size:0.7rem">${esc(r.completed_by_admin)}</td>
+      </tr>`;
+    }).join('') + `<tr class="tx-total">
+      <td colspan="5" style="text-align:right">TOTAL</td>
+      <td>${fmt(totalAmt)} RSD</td><td></td>
+    </tr>`;
+  }
+
+  /* ══════════════════════════════════════
+     MONTHLY ANALYTICS (from completed_reservations)
+  ══════════════════════════════════════ */
+  let _charts = {};
+
+  async function loadMonthlyAnalytics() {
+    const year  = parseInt(document.getElementById('anYear').value,10);
+    const month = parseInt(document.getElementById('anMonth').value,10);
+    const {data,error} = await _supabase.rpc('get_monthly_analytics',{p_year:year,p_month:month});
+    if(error||!data) return;
+    _lastMonthly = data;
+
+    document.getElementById('mCompleted').textContent = data.completed??0;
+    document.getElementById('mRevenue').textContent   = fmt(data.revenue)+' RSD';
+    document.getElementById('mCash').textContent       = fmt(data.cash)+' RSD';
+    document.getElementById('mCard').textContent       = fmt(data.card)+' RSD';
+    document.getElementById('mAvg').textContent        = fmt(data.avg_spend)+' RSD';
+    document.getElementById('mNoShow').textContent     = data.no_show??0;
+    document.getElementById('mCancelled').textContent  = data.cancelled??0;
+
+    const total=(data.cash||0)+(data.card||0);
+    document.getElementById('mCashAmt').textContent   = fmt(data.cash)+' RSD';
+    document.getElementById('mCashCount').textContent  = data.cash_count??0;
+    document.getElementById('mCashPct').textContent    = pct(data.cash,total)+'%';
+    document.getElementById('mCashBar').style.width    = pct(data.cash,total)+'%';
+    document.getElementById('mCardAmt').textContent   = fmt(data.card)+' RSD';
+    document.getElementById('mCardCount').textContent  = data.card_count??0;
+    document.getElementById('mCardPct').textContent    = pct(data.card,total)+'%';
+    document.getElementById('mCardBar').style.width    = pct(data.card,total)+'%';
+
+    // Day breakdown table
+    const days = data.daily||[];
+    const tbody = document.getElementById('mDayBody');
+    let sumComp=0,sumRev=0,sumCash=0,sumCard=0,sumNS=0,sumCanc=0;
+    tbody.innerHTML = days.map(d=>{
+      sumComp+=d.completed||0; sumRev+=d.revenue||0; sumCash+=d.cash||0; sumCard+=d.card||0; sumNS+=d.no_show||0; sumCanc+=d.cancelled||0;
+      const hasData = (d.completed||0)+(d.no_show||0)+(d.cancelled||0) > 0;
+      const z = v => v ? fmt(v) : '<span style="color:rgba(245,242,236,0.15)">0</span>';
+      return `<tr${hasData?'':' style="opacity:0.35"'}>
+        <td>${fmtDate(d.date)}</td><td>${z(d.completed)}</td><td>${z(d.revenue)}</td>
+        <td>${z(d.cash)}</td><td>${z(d.card)}</td><td>${z(d.no_show)}</td><td>${z(d.cancelled)}</td>
+      </tr>`;
+    }).join('') + `<tr class="tx-total">
+      <td>TOTAL</td><td>${sumComp}</td><td>${fmt(sumRev)}</td>
+      <td>${fmt(sumCash)}</td><td>${fmt(sumCard)}</td><td>${sumNS}</td><td>${sumCanc}</td>
+    </tr>`;
+
+    // Charts
+    renderCharts(days, data);
+
+    // Monthly transactions
+    const dateFrom = new Date(year,month-1,1).toISOString().split('T')[0];
+    const dateTo   = new Date(year,month,0).toISOString().split('T')[0];
+    loadMonthlyTransactions(dateFrom, dateTo);
+  }
+
+  async function loadMonthlyTransactions(from, to) {
+    const {data,error} = await _supabase
+      .from('completed_reservations')
+      .select('*')
+      .gte('reservation_date', from)
+      .lte('reservation_date', to)
+      .order('reservation_date')
+      .order('reservation_start_time');
+    const wrap  = document.getElementById('mTxWrap');
+    const tbody = document.getElementById('mTxBody');
+    if(error||!data||!data.length) { wrap.style.display='none'; return; }
+    wrap.style.display='block';
+    let totalAmt = 0;
+    tbody.innerHTML = data.map(r=>{
+      totalAmt += r.payment_amount_rsd||0;
+      return `<tr>
+        <td>${fmtDate(r.reservation_date)}</td>
+        <td>${(r.reservation_start_time||'').slice(0,5)}</td>
+        <td><strong>${esc(r.customer_name)}</strong></td>
+        <td style="color:var(--copper)">${esc(r.table_number)}</td>
+        <td>${r.guest_count}</td>
+        <td>${payIcon(r.payment_method)}</td>
+        <td style="color:var(--green);font-weight:500">${fmt(r.payment_amount_rsd)}</td>
+        <td class="muted" style="font-size:0.7rem">${esc(r.completed_by_admin)}</td>
+      </tr>`;
+    }).join('') + `<tr class="tx-total">
+      <td colspan="6" style="text-align:right">TOTAL</td>
+      <td>${fmt(totalAmt)} RSD</td><td></td>
+    </tr>`;
+  }
+
+  /* ══════════════════════════════════════
+     CHARTS (Chart.js)
+  ══════════════════════════════════════ */
+  const _chartOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks:{color:'rgba(245,242,236,0.25)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.03)'} },
+      y: { ticks:{color:'rgba(245,242,236,0.25)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+    }
+  };
+
+  function destroyChart(key) { if(_charts[key]){_charts[key].destroy();delete _charts[key];} }
+
+  function renderCharts(days, data) {
+    const labels = days.map(d=>new Date(d.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'}));
+
+    // Revenue trend
+    destroyChart('revenue');
+    _charts.revenue = new Chart(document.getElementById('chartRevenue'),{
+      type:'bar', data:{
+        labels,
+        datasets:[{data:days.map(d=>d.revenue||0),backgroundColor:'rgba(109,191,103,0.5)',borderColor:'#6dbf67',borderWidth:1}]
+      }, options:{..._chartOpts, plugins:{...(_chartOpts.plugins),tooltip:{callbacks:{label:c=>fmt(c.raw)+' RSD'}}}}
+    });
+
+    // Completed trend
+    destroyChart('completed');
+    _charts.completed = new Chart(document.getElementById('chartCompleted'),{
+      type:'line', data:{
+        labels,
+        datasets:[{data:days.map(d=>d.completed||0),borderColor:'var(--copper)',backgroundColor:'rgba(184,124,90,0.15)',fill:true,tension:0.3,pointRadius:2}]
+      }, options:_chartOpts
+    });
+
+    // Payment distribution (doughnut)
+    destroyChart('payMethod');
+    _charts.payMethod = new Chart(document.getElementById('chartPayMethod'),{
+      type:'doughnut', data:{
+        labels:['Cash','Card'],
+        datasets:[{data:[data.cash||0,data.card||0],backgroundColor:['rgba(109,191,103,0.6)','rgba(130,180,224,0.6)'],borderColor:['#6dbf67','#82b4e0'],borderWidth:1}]
+      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'rgba(245,242,236,0.5)',font:{size:10}}}}}
+    });
+
+    // No-show trend
+    destroyChart('noShow');
+    _charts.noShow = new Chart(document.getElementById('chartNoShow'),{
+      type:'line', data:{
+        labels,
+        datasets:[{data:days.map(d=>d.no_show||0),borderColor:'#c49de0',backgroundColor:'rgba(196,157,224,0.1)',fill:true,tension:0.3,pointRadius:2}]
+      }, options:_chartOpts
+    });
+  }
+
+  /* ══════════════════════════════════════
+     RESERVATIONS LIST
+  ══════════════════════════════════════ */
+  const todayStr = new Date().toISOString().split('T')[0];
   let _quickMode = 'all';
 
   function quickFilter(mode, btn) {
     _quickMode = mode;
-    document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-
-    // Reset manual filters
-    document.getElementById('filterDate').value   = '';
-    document.getElementById('filterStatus').value = '';
-
-    // Apply preset filters
-    if (mode === 'today')     document.getElementById('filterDate').value   = today;
-    if (mode === 'pending')   document.getElementById('filterStatus').value = 'pending';
-    if (mode === 'confirmed') document.getElementById('filterStatus').value = 'confirmed';
-    if (mode === 'cancelled') document.getElementById('filterStatus').value = 'cancelled';
-    if (mode === 'completed') document.getElementById('filterStatus').value = 'completed';
-    if (mode === 'no_show')   document.getElementById('filterStatus').value = 'no_show';
-
+    document.getElementById('filterDate').value='';
+    document.getElementById('filterStatus').value='';
+    if(mode==='today')     document.getElementById('filterDate').value   = todayStr;
+    if(mode==='pending')   document.getElementById('filterStatus').value = 'pending';
+    if(mode==='confirmed') document.getElementById('filterStatus').value = 'confirmed';
+    if(mode==='cancelled') document.getElementById('filterStatus').value = 'cancelled';
+    if(mode==='completed') document.getElementById('filterStatus').value = 'completed';
+    if(mode==='no_show')   document.getElementById('filterStatus').value = 'no_show';
     loadReservations();
   }
 
-  /* ── LOAD RESERVATIONS (uses search_reservations RPC) ── */
   async function loadReservations() {
-    const search = document.getElementById('filterSearch').value.trim() || null;
-    const date   = document.getElementById('filterDate').value   || null;
-    const status = document.getElementById('filterStatus').value || null;
-
-    // For "upcoming": date_from = tomorrow
-    let dateFrom = date;
-    let dateTo   = date;
-    if (_quickMode === 'upcoming') {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dateFrom = tomorrow.toISOString().split('T')[0];
-      dateTo   = null;
+    const search = document.getElementById('filterSearch').value.trim()||null;
+    const date   = document.getElementById('filterDate').value||null;
+    const status = document.getElementById('filterStatus').value||null;
+    let dateFrom=date, dateTo=date;
+    if(_quickMode==='upcoming'){
+      const t=new Date();t.setDate(t.getDate()+1);
+      dateFrom=t.toISOString().split('T')[0]; dateTo=null;
     }
-
-    const { data, error } = await _supabase.rpc('search_reservations', {
-      p_query:     search,
-      p_status:    status,
-      p_date_from: dateFrom,
-      p_date_to:   dateTo,
-      p_limit:     200,
-      p_offset:    0
-    });
-
-    if (error) {
-      console.error('Load reservations error:', error);
-      document.getElementById('resBody').innerHTML =
-        '<tr><td colspan="8" class="empty-state">Failed to load reservations.</td></tr>';
-      return;
-    }
-
-    renderTable(data || []);
+    const{data,error}=await _supabase.rpc('search_reservations',{p_query:search,p_status:status,p_date_from:dateFrom,p_date_to:dateTo,p_limit:200,p_offset:0});
+    if(error){document.getElementById('resBody').innerHTML='<tr><td colspan="8" class="empty-state">Error loading.</td></tr>';return;}
+    renderTable(data||[]);
   }
 
   let _debounceTimer;
-  function debounceLoad() {
-    clearTimeout(_debounceTimer);
-    _debounceTimer = setTimeout(loadReservations, 350);
-  }
+  function debounceLoad(){clearTimeout(_debounceTimer);_debounceTimer=setTimeout(loadReservations,350);}
 
-  function clearFilters() {
-    document.getElementById('filterSearch').value = '';
-    document.getElementById('filterDate').value   = '';
-    document.getElementById('filterStatus').value = '';
-    _quickMode = 'all';
-    document.querySelectorAll('.qf-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  function clearFilters(){
+    document.getElementById('filterSearch').value='';
+    document.getElementById('filterDate').value='';
+    document.getElementById('filterStatus').value='';
+    _quickMode='all';
+    document.querySelectorAll('.qf-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
     loadReservations();
   }
 
-  /* ── RENDER TABLE ── */
   function renderTable(rows) {
     const tbody = document.getElementById('resBody');
-    if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No reservations found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = rows.map(r => `
-      <tr onclick="showDetail(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="cursor:pointer;">
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state">No reservations found</td></tr>';return;}
+    tbody.innerHTML = rows.map(r=>`
+      <tr onclick="showDetail(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="cursor:pointer">
         <td><strong>${esc(r.customer_name)}</strong></td>
-        <td>${formatDate(r.reservation_date)}</td>
-        <td>${r.reservation_time?.slice(0,5) || '—'}</td>
+        <td>${fmtDate(r.reservation_date)}</td>
+        <td>${r.reservation_time?.slice(0,5)||'—'}</td>
         <td><strong style="color:var(--copper)">${esc(r.table_number)}</strong> <span class="muted">${esc(r.area)}</span></td>
         <td>${r.guest_count}</td>
         <td class="muted">${esc(r.customer_email)}<br>${esc(r.customer_phone)}</td>
         <td><span class="status status-${r.status}">${r.status}</span></td>
-        <td onclick="event.stopPropagation()">
-          <div class="actions">
-            ${r.status === 'completed' ? '' : `
-            ${r.status !== 'confirmed'  ? `<button class="act-btn act-confirm"  onclick="setStatus('${r.id}','confirmed')">Confirm</button>`  : ''}
-            ${                            `<button class="act-btn act-complete" onclick="openPayModal('${r.id}')">Done</button>`                    }
-            ${r.status !== 'cancelled'  ? `<button class="act-btn act-cancel"   onclick="openCancelModal('${r.id}')">Cancel</button>`         : ''}
-            ${r.status !== 'no_show'    ? `<button class="act-btn act-noshow"   onclick="setStatus('${r.id}','no_show')">No Show</button>`    : ''}
-            `}
-            <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
-          </div>
-        </td>
+        <td onclick="event.stopPropagation()"><div class="actions">
+          ${r.status==='completed'||r.status==='cancelled'||r.status==='no_show'?'':`
+          ${r.status!=='confirmed'?`<button class="act-btn act-confirm" onclick="setStatus('${r.id}','confirmed')">Confirm</button>`:''}
+          <button class="act-btn act-complete" onclick="openPayModal('${r.id}')">Done</button>
+          <button class="act-btn act-cancel"   onclick="openCancelModal('${r.id}')">Cancel</button>
+          <button class="act-btn act-noshow"   onclick="setStatus('${r.id}','no_show')">No Show</button>
+          `}
+          <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
+        </div></td>
       </tr>
     `).join('');
   }
 
-  function esc(str) {
-    if (!str) return '—';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function formatDate(d) {
-    if (!d) return '—';
-    return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
-  }
-
-  /* ── STATUS UPDATE ── */
+  /* ══════════════════════════════════════
+     STATUS / PAYMENT / CANCEL / DELETE
+  ══════════════════════════════════════ */
   async function setStatus(id, status) {
-    const { error } = await _supabase
-      .from('reservations')
-      .update({ status })
-      .eq('id', id);
-    if (error) { console.error('Status update error:', error); return; }
-    loadAll();
-    loadAnalytics();
+    const{error}=await _supabase.from('reservations').update({status}).eq('id',id);
+    if(error){console.error(error);return;} loadAll();
   }
 
-  /* ── PAYMENT MODAL ── */
-  let _payResId       = null;
-  let _payMethod      = 'cash';
-  let _cancelResId    = null;
-  let _cancelStep     = 1;
+  let _payResId=null, _payMethod='cash';
 
-  function openPayModal(id) {
-    _payResId  = id;
-    _payMethod = 'cash';
+  function openPayModal(id){
+    _payResId=id; _payMethod='cash';
     document.getElementById('payBtnCash').classList.add('active');
     document.getElementById('payBtnCard').classList.remove('active');
-    document.getElementById('payAmount').value = '';
-    document.getElementById('payError').style.display = 'none';
+    document.getElementById('payAmount').value='';
+    document.getElementById('payError').style.display='none';
     document.getElementById('payOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('payAmount').focus(), 100);
+    setTimeout(()=>document.getElementById('payAmount').focus(),100);
+  }
+  function closePayModal(){document.getElementById('payOverlay').classList.remove('open');_payResId=null;}
+  function selectPayMethod(m){
+    _payMethod=m;
+    document.getElementById('payBtnCash').classList.toggle('active',m==='cash');
+    document.getElementById('payBtnCard').classList.toggle('active',m==='card');
   }
 
-  function closePayModal() {
-    document.getElementById('payOverlay').classList.remove('open');
-    document.getElementById('payError').style.display = 'none';
-    _payResId = null;
-  }
+  async function submitPayment(){
+    if(!_payResId) return;
+    const raw = document.getElementById('payAmount').value.trim();
+    const amt = parseInt(raw,10);
+    const errEl = document.getElementById('payError');
 
-  function selectPayMethod(method) {
-    _payMethod = method;
-    document.getElementById('payBtnCash').classList.toggle('active', method === 'cash');
-    document.getElementById('payBtnCard').classList.toggle('active', method === 'card');
-  }
-
-  function showPayError(msg) {
-    const el = document.getElementById('payError');
-    el.textContent = msg;
-    el.style.display = 'block';
-  }
-
-  async function submitPayment() {
-    if (!_payResId) return;
-    const rawAmount = document.getElementById('payAmount').value.trim();
-    const amount    = rawAmount === '' ? 0 : parseInt(rawAmount, 10);
-
-    if (isNaN(amount) || amount < 0) {
-      showPayError('Please enter a valid amount (0 or more).');
+    if(!raw || isNaN(amt) || amt <= 0){
+      errEl.textContent='Amount must be greater than 0.';
+      errEl.style.display='block';
       document.getElementById('payAmount').focus();
       return;
     }
+    errEl.style.display='none';
 
     const btn = document.getElementById('payConfirmBtn');
-    btn.textContent = 'Saving…';
-    btn.disabled    = true;
+    btn.textContent='Saving…'; btn.disabled=true;
 
-    const { error } = await _supabase
-      .from('reservations')
-      .update({
-        status:         'completed',
-        payment_method: _payMethod,
-        payment_amount: amount
-      })
-      .eq('id', _payResId);
+    const{error}=await _supabase.from('reservations')
+      .update({status:'completed', payment_method:_payMethod, payment_amount:amt})
+      .eq('id',_payResId);
 
-    btn.textContent = 'Confirm & Complete';
-    btn.disabled    = false;
+    btn.textContent='Confirm & Complete'; btn.disabled=false;
 
-    if (error) {
-      console.error('Payment error:', error);
-      const msg = error.message || error.details || JSON.stringify(error);
-      if (msg.includes('payment_method') || msg.includes('payment_amount') || msg.includes('column')) {
-        showPayError('Database columns missing — please run add_payment_analytics.sql in Supabase first.');
-      } else {
-        showPayError('Error: ' + msg);
-      }
+    if(error){
+      const msg=error.message||error.details||JSON.stringify(error);
+      errEl.textContent = msg.includes('column')?'Run completed_reservations_system.sql in Supabase first.':'Error: '+msg;
+      errEl.style.display='block';
       return;
     }
-
-    closePayModal();
-    loadAll();
-    loadAnalytics();
+    closePayModal(); loadAll();
   }
 
-  /* ── CANCEL MODAL (double confirm) ── */
-  function openCancelModal(id) {
-    _cancelResId  = id;
-    _cancelStep   = 1;
-    document.getElementById('cancelMsg').textContent =
-      'This will cancel the reservation. The table will become available again.';
-    const btn = document.getElementById('cancelConfirmBtn');
-    btn.textContent = 'Yes, Cancel';
-    btn.onclick     = cancelStep2;
+  let _cancelResId=null;
+
+  function openCancelModal(id){
+    _cancelResId=id;
+    document.getElementById('cancelMsg').textContent='This will cancel the reservation. The table will become available again.';
+    const btn=document.getElementById('cancelConfirmBtn');
+    btn.textContent='Yes, Cancel'; btn.style.background=''; btn.style.borderColor='';
+    btn.onclick=cancelStep2;
     document.getElementById('cancelOverlay').classList.add('open');
   }
-
-  function cancelStep2() {
-    document.getElementById('cancelMsg').textContent =
-      'Are you absolutely sure? This cannot be undone.';
-    const btn = document.getElementById('cancelConfirmBtn');
-    btn.textContent = 'Cancel Reservation';
-    btn.style.background    = 'rgba(180,60,60,0.4)';
-    btn.style.borderColor   = 'rgba(180,60,60,0.8)';
-    btn.onclick = confirmCancel;
+  function cancelStep2(){
+    document.getElementById('cancelMsg').textContent='Are you absolutely sure? This cannot be undone.';
+    const btn=document.getElementById('cancelConfirmBtn');
+    btn.textContent='Cancel Reservation';
+    btn.style.background='rgba(180,60,60,0.4)';btn.style.borderColor='rgba(180,60,60,0.8)';
+    btn.onclick=confirmCancel;
   }
-
-  async function confirmCancel() {
-    if (!_cancelResId) return;
+  async function confirmCancel(){
+    if(!_cancelResId) return;
     closeCancelModal();
-    const { error } = await _supabase
-      .from('reservations')
-      .update({ status: 'cancelled' })
-      .eq('id', _cancelResId);
-    if (error) { console.error('Cancel error:', error); return; }
+    await _supabase.from('reservations').update({status:'cancelled'}).eq('id',_cancelResId);
     loadAll();
-    loadAnalytics();
   }
-
-  function closeCancelModal() {
+  function closeCancelModal(){
     document.getElementById('cancelOverlay').classList.remove('open');
-    const btn = document.getElementById('cancelConfirmBtn');
-    btn.style.background  = '';
-    btn.style.borderColor = '';
-    _cancelResId = null;
+    _cancelResId=null;
   }
 
-  /* ── DELETE ── */
-  async function deleteRes(id) {
-    if (!confirm('Permanently delete this reservation? This cannot be undone.')) return;
-    const { error } = await _supabase
-      .from('reservations')
-      .delete()
-      .eq('id', id);
-    if (error) { console.error('Delete error:', error); return; }
+  async function deleteRes(id){
+    if(!confirm('Permanently delete this reservation?')) return;
+    await _supabase.from('reservations').delete().eq('id',id);
     loadAll();
-    loadAnalytics();
   }
 
-  /* ── ANALYTICS TAB SWITCHING ── */
-  let _analyticsTab = 'daily';
-  let _lastDailyData   = null;
-  let _lastMonthlyData = null;
-
-  function switchAnalyticsTab(tab) {
-    _analyticsTab = tab;
-    document.getElementById('tabDaily').classList.toggle('active',   tab === 'daily');
-    document.getElementById('tabMonthly').classList.toggle('active', tab === 'monthly');
-    document.getElementById('anDailyView').style.display   = tab === 'daily'   ? 'block' : 'none';
-    document.getElementById('anMonthlyView').style.display = tab === 'monthly' ? 'block' : 'none';
-    document.getElementById('analyticsDate').style.display  = tab === 'daily'   ? 'block' : 'none';
-    document.getElementById('analyticsMonth').style.display = tab === 'monthly' ? 'block' : 'none';
-    document.getElementById('analyticsYear').style.display  = tab === 'monthly' ? 'block' : 'none';
-    if (tab === 'monthly') loadMonthlyAnalytics();
-  }
-
-  /* ── COMPLETED RESERVATIONS DETAIL ── */
-  function payBadge(method) {
-    if (!method) return '<span class="an-zero">—</span>';
-    const color = method === 'cash' ? '#95d5b2' : '#82b4e0';
-    return `<span style="color:${color};font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;">${method === 'cash' ? '💵' : '💳'} ${method}</span>`;
-  }
-
-  async function loadDailyCompleted(date) {
-    const { data, error } = await _supabase
-      .from('reservations')
-      .select('customer_name, payment_method, payment_amount, reservation_time, guest_count, restaurant_tables(table_number)')
-      .eq('status', 'completed')
-      .eq('reservation_date', date)
-      .order('reservation_time');
-
-    const wrap  = document.getElementById('anDailyCompletedWrap');
-    const tbody = document.getElementById('anDailyCompletedBody');
-    if (error || !data || !data.length) { wrap.style.display = 'none'; return; }
-    wrap.style.display = 'block';
-    tbody.innerHTML = data.map(r => `<tr>
-      <td>${(r.reservation_time || '').slice(0,5)}</td>
-      <td><strong>${esc(r.customer_name)}</strong></td>
-      <td style="color:var(--copper);">${esc(r.restaurant_tables?.table_number)}</td>
-      <td>${r.guest_count ?? '—'}</td>
-      <td>${payBadge(r.payment_method)}</td>
-      <td style="color:#6dbf67;font-weight:500;">${(r.payment_amount ?? 0).toLocaleString()}</td>
-    </tr>`).join('');
-  }
-
-  async function loadMonthlyCompleted(dateFrom, dateTo) {
-    const { data, error } = await _supabase
-      .from('reservations')
-      .select('customer_name, payment_method, payment_amount, reservation_date, reservation_time, guest_count, restaurant_tables(table_number)')
-      .eq('status', 'completed')
-      .gte('reservation_date', dateFrom)
-      .lte('reservation_date', dateTo)
-      .order('reservation_date')
-      .order('reservation_time');
-
-    const wrap  = document.getElementById('anMonthlyCompletedWrap');
-    const tbody = document.getElementById('anMonthlyCompletedBody');
-    if (error || !data || !data.length) { wrap.style.display = 'none'; return; }
-    wrap.style.display = 'block';
-    tbody.innerHTML = data.map(r => `<tr>
-      <td>${formatDate(r.reservation_date)}</td>
-      <td>${(r.reservation_time || '').slice(0,5)}</td>
-      <td><strong>${esc(r.customer_name)}</strong></td>
-      <td style="color:var(--copper);">${esc(r.restaurant_tables?.table_number)}</td>
-      <td>${r.guest_count ?? '—'}</td>
-      <td>${payBadge(r.payment_method)}</td>
-      <td style="color:#6dbf67;font-weight:500;">${(r.payment_amount ?? 0).toLocaleString()}</td>
-    </tr>`).join('');
-  }
-
-  /* ── DAILY ANALYTICS ── */
-  async function loadAnalytics() {
-    const date = document.getElementById('analyticsDate').value || new Date().toISOString().split('T')[0];
-    const { data, error } = await _supabase.rpc('get_daily_analytics', { p_date: date });
-    if (error || !data) return;
-    _lastDailyData = data;
-    document.getElementById('anTotal').textContent     = data.total        ?? '—';
-    document.getElementById('anCompleted').textContent = data.completed    ?? '—';
-    document.getElementById('anPending').textContent   = (data.pending ?? 0) + (data.confirmed ?? 0);
-    document.getElementById('anNoShow').textContent    = data.no_show      ?? '—';
-    document.getElementById('anGuests').textContent    = data.total_guests ?? '—';
-    document.getElementById('anRevenue').textContent   = (data.revenue ?? 0).toLocaleString();
-    document.getElementById('anCash').textContent      = (data.cash    ?? 0).toLocaleString();
-    document.getElementById('anCard').textContent      = (data.card    ?? 0).toLocaleString();
-    loadDailyCompleted(date);
-  }
-
-  /* ── MONTHLY ANALYTICS ── */
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  function initMonthYearPickers() {
-    const now   = new Date();
-    const mSel  = document.getElementById('analyticsMonth');
-    const ySel  = document.getElementById('analyticsYear');
-    MONTHS.forEach((m, i) => {
-      const o = document.createElement('option');
-      o.value = i + 1; o.textContent = m;
-      if (i + 1 === now.getMonth() + 1) o.selected = true;
-      mSel.appendChild(o);
-    });
-    for (let y = now.getFullYear(); y >= now.getFullYear() - 3; y--) {
-      const o = document.createElement('option');
-      o.value = y; o.textContent = y;
-      if (y === now.getFullYear()) o.selected = true;
-      ySel.appendChild(o);
-    }
-  }
-  initMonthYearPickers();
-
-  async function loadMonthlyAnalytics() {
-    const year  = parseInt(document.getElementById('analyticsYear').value,  10);
-    const month = parseInt(document.getElementById('analyticsMonth').value, 10);
-    const { data, error } = await _supabase.rpc('get_monthly_analytics', { p_year: year, p_month: month });
-    if (error || !data) return;
-    _lastMonthlyData = data;
-    const t = data.totals || {};
-    document.getElementById('manTotal').textContent     = t.total        ?? '—';
-    document.getElementById('manCompleted').textContent = t.completed    ?? '—';
-    document.getElementById('manNoShow').textContent    = t.no_show      ?? '—';
-    document.getElementById('manGuests').textContent    = t.total_guests ?? '—';
-    document.getElementById('manRevenue').textContent   = (t.revenue ?? 0).toLocaleString();
-    document.getElementById('manCash').textContent      = (t.cash    ?? 0).toLocaleString();
-    document.getElementById('manCard').textContent      = (t.card    ?? 0).toLocaleString();
-
-    const tbody = document.getElementById('anMonthlyBody');
-    const days  = data.daily || [];
-    if (!days.length) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:rgba(245,242,236,0.2);padding:2rem;">No data for this month</td></tr>';
-      return;
-    }
-    tbody.innerHTML = days.map(d => {
-      const dt = new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
-      const z  = v => v ? v.toLocaleString() : '<span class="an-zero">0</span>';
-      return `<tr>
-        <td>${dt}</td>
-        <td>${d.total || '<span class="an-zero">0</span>'}</td>
-        <td>${d.completed || '<span class="an-zero">0</span>'}</td>
-        <td>${d.cancelled || '<span class="an-zero">0</span>'}</td>
-        <td>${d.no_show   || '<span class="an-zero">0</span>'}</td>
-        <td>${d.guests    || '<span class="an-zero">0</span>'}</td>
-        <td>${z(d.revenue)}</td>
-        <td>${z(d.cash)}</td>
-        <td>${z(d.card)}</td>
-      </tr>`;
-    }).join('') + `<tr class="an-total-row">
-      <td>TOTAL</td>
-      <td>${t.total ?? 0}</td>
-      <td>${t.completed ?? 0}</td>
-      <td>${t.cancelled ?? 0}</td>
-      <td>${t.no_show ?? 0}</td>
-      <td>${t.total_guests ?? 0}</td>
-      <td>${(t.revenue ?? 0).toLocaleString()}</td>
-      <td>${(t.cash ?? 0).toLocaleString()}</td>
-      <td>${(t.card ?? 0).toLocaleString()}</td>
-    </tr>`;
-
-    // Load completed reservations list for the month
-    const dateFrom = new Date(year, month - 1, 1).toISOString().split('T')[0];
-    const dateTo   = new Date(year, month, 0).toISOString().split('T')[0];
-    loadMonthlyCompleted(dateFrom, dateTo);
-  }
-
-  /* ── PDF EXPORT ── */
-  function downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    // Header
-    doc.setFillColor(26, 26, 24);
-    doc.rect(0, 0, 210, 30, 'F');
-    doc.setTextColor(184, 124, 90);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SOKOJ RESTORAN', 14, 13);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(160, 140, 120);
-
-    let subtitle, body, cols;
-
-    if (_analyticsTab === 'daily') {
-      const date = document.getElementById('analyticsDate').value || new Date().toISOString().split('T')[0];
-      const d    = _lastDailyData || {};
-      subtitle   = 'Daily Analytics Report — ' + new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-      doc.text(subtitle, 14, 20);
-      doc.setTextColor(30, 30, 30);
-
-      cols = [['Metric', 'Value']];
-      body = [
-        ['Total Bookings',  d.total        ?? 0],
-        ['Completed',       d.completed    ?? 0],
-        ['Pending / Confirmed', (d.pending ?? 0) + (d.confirmed ?? 0)],
-        ['No Show',         d.no_show      ?? 0],
-        ['Total Guests',    d.total_guests ?? 0],
-        ['Total Revenue',   ((d.revenue ?? 0).toLocaleString()) + ' RSD'],
-        ['Cash Revenue',    ((d.cash    ?? 0).toLocaleString()) + ' RSD'],
-        ['Card Revenue',    ((d.card    ?? 0).toLocaleString()) + ' RSD'],
-      ];
-      doc.autoTable({
-        startY: 36,
-        head: cols,
-        body: body,
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [184, 124, 90], textColor: 255 },
-        alternateRowStyles: { fillColor: [245, 242, 236] },
-        margin: { left: 14, right: 14 }
-      });
-
-    } else {
-      const year  = document.getElementById('analyticsYear').value;
-      const month = document.getElementById('analyticsMonth').value;
-      const data  = _lastMonthlyData || {};
-      const t     = data.totals || {};
-      subtitle    = 'Monthly Analytics Report — ' + MONTHS[month - 1] + ' ' + year;
-      doc.text(subtitle, 14, 20);
-
-      // Summary table
-      doc.autoTable({
-        startY: 36,
-        head: [['Bookings','Completed','No Show','Guests','Revenue (RSD)','Cash (RSD)','Card (RSD)']],
-        body: [[
-          t.total ?? 0, t.completed ?? 0, t.no_show ?? 0, t.total_guests ?? 0,
-          (t.revenue ?? 0).toLocaleString(), (t.cash ?? 0).toLocaleString(), (t.card ?? 0).toLocaleString()
-        ]],
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [184, 124, 90], textColor: 255 },
-        margin: { left: 14, right: 14 }
-      });
-
-      // Daily breakdown
-      const days = data.daily || [];
-      if (days.length) {
-        doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 8,
-          head: [['Date','Bookings','Completed','Cancelled','No Show','Guests','Revenue','Cash','Card']],
-          body: days.map(d => [
-            new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { day:'2-digit', month:'short' }),
-            d.total, d.completed, d.cancelled, d.no_show, d.guests,
-            (d.revenue || 0).toLocaleString(),
-            (d.cash    || 0).toLocaleString(),
-            (d.card    || 0).toLocaleString()
-          ]),
-          styles: { fontSize: 8 },
-          headStyles: { fillColor: [60, 60, 55], textColor: [184, 124, 90] },
-          alternateRowStyles: { fillColor: [245, 242, 236] },
-          margin: { left: 14, right: 14 }
-        });
-      }
-    }
-
-    // Footer
-    doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Generated ' + new Date().toLocaleString('en-GB'), 14, 287);
-    doc.text('Sokoj Restoran — Confidential', 210 - 14, 287, { align: 'right' });
-
-    const filename = _analyticsTab === 'daily'
-      ? 'sokoj-daily-' + (document.getElementById('analyticsDate').value || 'today') + '.pdf'
-      : 'sokoj-monthly-' + document.getElementById('analyticsYear').value + '-' + String(document.getElementById('analyticsMonth').value).padStart(2,'0') + '.pdf';
-    doc.save(filename);
-  }
-
-  /* ── DETAIL MODAL ── */
-  function showDetail(r) {
-    document.getElementById('detailContent').innerHTML = `
-      <div class="detail-row"><span class="k">Name</span>             <span class="v">${esc(r.customer_name)}</span></div>
-      <div class="detail-row"><span class="k">Email</span>            <span class="v">${esc(r.customer_email)}</span></div>
-      <div class="detail-row"><span class="k">Phone</span>            <span class="v">${esc(r.customer_phone)}</span></div>
-      <div class="detail-row"><span class="k">Date</span>             <span class="v">${formatDate(r.reservation_date)}</span></div>
-      <div class="detail-row"><span class="k">Time</span>             <span class="v">${r.reservation_time?.slice(0,5) || '—'}</span></div>
-      <div class="detail-row"><span class="k">Table</span>            <span class="v">${esc(r.table_number)} · ${esc(r.area)}</span></div>
-      <div class="detail-row"><span class="k">Guests</span>           <span class="v">${r.guest_count}</span></div>
-      <div class="detail-row"><span class="k">Status</span>           <span class="v"><span class="status status-${r.status}">${r.status}</span></span></div>
-      <div class="detail-row"><span class="k">Special Requests</span> <span class="v">${esc(r.special_requests)}</span></div>
-      <div class="detail-row"><span class="k">Created</span>          <span class="v">${r.created_at ? new Date(r.created_at).toLocaleString('en-GB') : '—'}</span></div>
-      ${r.payment_method ? `<div class="detail-row"><span class="k">Payment</span> <span class="v">${r.payment_method.toUpperCase()} · ${(r.payment_amount ?? 0).toLocaleString()} RSD</span></div>` : ''}
+  /* ══════════════════════════════════════
+     DETAIL MODAL
+  ══════════════════════════════════════ */
+  function showDetail(r){
+    document.getElementById('detailContent').innerHTML=`
+      <div class="detail-row"><span class="k">Name</span><span class="v">${esc(r.customer_name)}</span></div>
+      <div class="detail-row"><span class="k">Email</span><span class="v">${esc(r.customer_email)}</span></div>
+      <div class="detail-row"><span class="k">Phone</span><span class="v">${esc(r.customer_phone)}</span></div>
+      <div class="detail-row"><span class="k">Date</span><span class="v">${fmtDate(r.reservation_date)}</span></div>
+      <div class="detail-row"><span class="k">Time</span><span class="v">${r.reservation_time?.slice(0,5)||'—'}</span></div>
+      <div class="detail-row"><span class="k">Table</span><span class="v">${esc(r.table_number)} · ${esc(r.area)}</span></div>
+      <div class="detail-row"><span class="k">Guests</span><span class="v">${r.guest_count}</span></div>
+      <div class="detail-row"><span class="k">Status</span><span class="v"><span class="status status-${r.status}">${r.status}</span></span></div>
+      <div class="detail-row"><span class="k">Special Requests</span><span class="v">${esc(r.special_requests)}</span></div>
+      <div class="detail-row"><span class="k">Created</span><span class="v">${r.created_at?new Date(r.created_at).toLocaleString('en-GB'):'—'}</span></div>
+      ${r.payment_method?`<div class="detail-row"><span class="k">Payment</span><span class="v">${r.payment_method.toUpperCase()} · ${fmt(r.payment_amount)} RSD</span></div>`:''}
     `;
     document.getElementById('detailOverlay').classList.add('open');
   }
+  function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
+  document.getElementById('detailOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('detailOverlay'))closeDetail();});
 
-  function closeDetail() {
-    document.getElementById('detailOverlay').classList.remove('open');
+  /* ══════════════════════════════════════
+     PDF EXPORT
+  ══════════════════════════════════════ */
+  function downloadPDF(){
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    doc.setFillColor(26,26,24); doc.rect(0,0,210,30,'F');
+    doc.setTextColor(184,124,90); doc.setFontSize(18); doc.setFont('helvetica','bold');
+    doc.text('SOKOJ RESTORAN',14,13);
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(160,140,120);
+
+    if(_anTab==='daily'){
+      const date=document.getElementById('anDate').value||_today;
+      const d=_lastDaily||{};
+      doc.text('Daily Report — '+new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),14,20);
+      doc.autoTable({startY:36,head:[['Metric','Value']],body:[
+        ['Completed Reservations',d.completed??0],['Total Revenue',fmt(d.revenue)+' RSD'],
+        ['Cash Revenue',fmt(d.cash)+' RSD'],['Card Revenue',fmt(d.card)+' RSD'],
+        ['Average Spend',fmt(d.avg_spend)+' RSD'],['No-Shows',d.no_show??0],['Cancelled',d.cancelled??0]
+      ],styles:{fontSize:10},headStyles:{fillColor:[184,124,90],textColor:255},alternateRowStyles:{fillColor:[245,242,236]},margin:{left:14,right:14}});
+    } else {
+      const y=document.getElementById('anYear').value, m=document.getElementById('anMonth').value;
+      const d=_lastMonthly||{};
+      doc.text('Monthly Report — '+MONTHS[m-1]+' '+y,14,20);
+      doc.autoTable({startY:36,head:[['Completed','Revenue','Cash','Card','Avg Spend','No-Shows','Cancelled']],body:[[
+        d.completed??0,fmt(d.revenue)+' RSD',fmt(d.cash)+' RSD',fmt(d.card)+' RSD',
+        fmt(d.avg_spend)+' RSD',d.no_show??0,d.cancelled??0
+      ]],styles:{fontSize:9},headStyles:{fillColor:[184,124,90],textColor:255},margin:{left:14,right:14}});
+      const days=d.daily||[];
+      if(days.length){
+        doc.autoTable({startY:doc.lastAutoTable.finalY+8,
+          head:[['Date','Completed','Revenue','Cash','Card','No Show','Cancelled']],
+          body:days.map(x=>[new Date(x.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'}),
+            x.completed,fmt(x.revenue),fmt(x.cash),fmt(x.card),x.no_show,x.cancelled]),
+          styles:{fontSize:8},headStyles:{fillColor:[60,60,55],textColor:[184,124,90]},
+          alternateRowStyles:{fillColor:[245,242,236]},margin:{left:14,right:14}});
+      }
+    }
+    doc.setFontSize(7);doc.setTextColor(150);
+    doc.text('Generated '+new Date().toLocaleString('en-GB'),14,287);
+    doc.text('Sokoj Restoran — Confidential',196,287,{align:'right'});
+    const fn = _anTab==='daily'
+      ? 'sokoj-daily-'+(document.getElementById('anDate').value||'today')+'.pdf'
+      : 'sokoj-monthly-'+document.getElementById('anYear').value+'-'+String(document.getElementById('anMonth').value).padStart(2,'0')+'.pdf';
+    doc.save(fn);
   }
-
-  document.getElementById('detailOverlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('detailOverlay')) closeDetail();
-  });
 </script>
 </body>
 </html>
