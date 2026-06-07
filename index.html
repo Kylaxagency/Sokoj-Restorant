@@ -61,7 +61,7 @@
     z-index: 1000;
     padding: 0 4rem;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: visible;
@@ -84,8 +84,8 @@
   }
   .nav-logo:hover { opacity: 0.75; }
   .nav-logo-img {
-    height: 175px;
-    width: 175px;
+    height: 140px;
+    width: 140px;
     display: block;
     filter: invert(1);
   }
@@ -99,12 +99,13 @@
     gap: 2.5rem;
     list-style: none;
     align-items: center;
-    padding-top: 1rem;
+    align-self: center;
+    padding-top: 0;
   }
 
   .nav-links a {
     font-family: var(--sans);
-    font-size: 0.7rem;
+    font-size: 0.95rem;
     font-weight: 300;
     letter-spacing: 0.2em;
     text-transform: uppercase;
