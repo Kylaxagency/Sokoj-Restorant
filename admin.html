@@ -1328,6 +1328,7 @@
         .update({archived: true, archived_at: new Date().toISOString(), archived_by: _adminEmail})
         .eq('reservation_id', _cancelResId);
       if (error) { alert('Error: ' + error.message); btn.textContent = 'Yes, Delete'; btn.disabled = false; return; }
+      await _supabase.from('reservations').delete().eq('id', _cancelResId);
       closeCancelModal();
       loadAll();
       return;
