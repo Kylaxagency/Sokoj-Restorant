@@ -625,13 +625,10 @@
       </div>
 
       <div class="quick-filters">
-        <button class="qf-btn active" onclick="quickFilter('all',this)">All</button>
-        <button class="qf-btn" onclick="quickFilter('today',this)">Today</button>
-        <button class="qf-btn" onclick="quickFilter('upcoming',this)">Upcoming</button>
-        <button class="qf-btn" onclick="quickFilter('pending',this)">Pending</button>
-        <button class="qf-btn" onclick="quickFilter('confirmed',this)">Confirmed</button>
-        <button class="qf-btn" onclick="quickFilter('cancelled',this)">Cancelled</button>
+        <button class="qf-btn active" onclick="quickFilter('upcoming',this)">Upcoming</button>
+        <button class="qf-btn" onclick="quickFilter('confirmed',this)">Accepted</button>
         <button class="qf-btn" onclick="quickFilter('completed',this)">Completed</button>
+        <button class="qf-btn" onclick="quickFilter('cancelled',this)">Declined</button>
         <button class="qf-btn" onclick="quickFilter('no_show',this)">No Show</button>
       </div>
 
@@ -1119,7 +1116,7 @@
      RESERVATIONS LIST
   ══════════════════════════════════════ */
   const todayStr = new Date().toISOString().split('T')[0];
-  let _quickMode = 'all';
+  let _quickMode = 'upcoming';
 
   function quickFilter(mode, btn) {
     _quickMode = mode;
@@ -1157,7 +1154,7 @@
     document.getElementById('filterSearch').value='';
     document.getElementById('filterDate').value='';
     document.getElementById('filterStatus').value='';
-    _quickMode='all';
+    _quickMode='upcoming';
     document.querySelectorAll('.qf-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
     loadReservations();
   }
