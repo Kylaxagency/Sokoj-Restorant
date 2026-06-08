@@ -375,6 +375,54 @@
   .cancel-btn-confirm { background: rgba(180,60,60,0.15); border-color: rgba(180,60,60,0.4); color: #e07070; }
   .cancel-btn-confirm:hover { background: rgba(180,60,60,0.25); }
 
+  /* ── Full-page transactions overlay ── */
+  #txFullPage {
+    display: none; position: fixed; inset: 0; z-index: 150;
+    background: var(--warm-black); overflow-y: auto;
+  }
+  #txFullPage.open { display: block; }
+  .txfp-header {
+    background: var(--charcoal); border-bottom: 1px solid var(--border);
+    padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .txfp-header h2 { font-family: var(--serif); font-size: 1.15rem; font-weight: 300; }
+  .txfp-header h2 span { color: var(--copper); }
+  .txfp-close {
+    padding: 0.45rem 1rem; background: none;
+    border: 1px solid rgba(245,242,236,0.15); color: var(--text-muted);
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; border-radius: var(--radius); transition: all 0.2s;
+  }
+  .txfp-close:hover { border-color: var(--copper); color: var(--copper); }
+  .txfp-body { padding: 1.5rem 2rem 3rem; max-width: 1300px; margin: 0 auto; }
+  .txfp-controls {
+    display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+  }
+  .txfp-controls select {
+    padding: 0.45rem 0.8rem; background: var(--charcoal);
+    border: 1px solid rgba(245,242,236,0.1); color: var(--ivory);
+    font-size: 0.78rem; outline: none; border-radius: var(--radius);
+  }
+  .txfp-controls select:focus { border-color: var(--copper); }
+  .txfp-controls select option { background: var(--charcoal); color: var(--ivory); }
+  .txfp-summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.5rem; margin-bottom: 1.25rem;
+  }
+  .txfp-stat {
+    text-align: center; padding: 0.9rem 0.5rem;
+    background: var(--charcoal); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .txfp-stat-val { font-family: var(--serif); font-size: 1.3rem; font-weight: 300; line-height: 1.2; }
+  .txfp-stat-lbl { font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-top: 0.2rem; }
+  .txfp-search {
+    width: 100%; max-width: 380px; padding: 0.5rem 0.85rem; margin-bottom: 1rem;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(245,242,236,0.08);
+    color: var(--ivory); font-size: 0.8rem; outline: none; border-radius: var(--radius);
+  }
+  .txfp-search:focus { border-color: var(--copper); }
+
   /* ── Responsive ── */
   @media (max-width: 1100px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
@@ -655,6 +703,42 @@
     <button class="detail-close" onclick="closeDetail()">✕</button>
     <h3>Reservation Details</h3>
     <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- ── Full-page transactions overlay ── -->
+<div id="txFullPage">
+  <div class="txfp-header">
+    <h2>Sokoj <span>·</span> Monthly Transactions</h2>
+    <button class="txfp-close" onclick="closeTxFullPage()">✕ Close</button>
+  </div>
+  <div class="txfp-body">
+    <div class="txfp-controls">
+      <select id="txfpMonth"></select>
+      <select id="txfpYear"></select>
+      <button class="btn-sm" onclick="loadTxFullPage()">Load</button>
+      <button class="btn-sm" onclick="txfpPrevMonth()">← Prev</button>
+      <button class="btn-sm" onclick="txfpNextMonth()">Next →</button>
+      <div style="margin-left:auto;">
+        <button class="btn-sm" onclick="txfpExportPDF()">↓ PDF</button>
+      </div>
+    </div>
+    <div class="txfp-summary" id="txfpSummary" style="display:none;">
+      <div class="txfp-stat"><div class="txfp-stat-val" style="color:var(--copper)" id="txfpCount">0</div><div class="txfp-stat-lbl">Transactions</div></div>
+      <div class="txfp-stat"><div class="txfp-stat-val" style="color:var(--green)" id="txfpTotal">0 RSD</div><div class="txfp-stat-lbl">Total Revenue</div></div>
+      <div class="txfp-stat"><div class="txfp-stat-val" style="color:var(--green)" id="txfpCash">0 RSD</div><div class="txfp-stat-lbl">Cash</div></div>
+      <div class="txfp-stat"><div class="txfp-stat-val" style="color:var(--blue)" id="txfpCard">0 RSD</div><div class="txfp-stat-lbl">Card</div></div>
+      <div class="txfp-stat"><div class="txfp-stat-val" style="color:var(--copper)" id="txfpAvg">0 RSD</div><div class="txfp-stat-lbl">Avg Spend</div></div>
+    </div>
+    <input type="text" class="txfp-search" id="txfpSearch" placeholder="Search by name, table, admin…" oninput="filterTxFullPage()">
+    <div class="tx-wrap">
+      <table class="tx-table">
+        <thead><tr>
+          <th>#</th><th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
+        </tr></thead>
+        <tbody id="txfpBody"><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -1229,10 +1313,160 @@
     doc.save(fn);
   }
 
+  /* ══════════════════════════════════════
+     FULL-PAGE TRANSACTIONS OVERLAY
+  ══════════════════════════════════════ */
+  let _txfpAll = [];
+
+  (function initTxfpPickers() {
+    const now = new Date();
+    const ms = document.getElementById('txfpMonth');
+    const ys = document.getElementById('txfpYear');
+    MONTHS.forEach((m,i) => {
+      const o = document.createElement('option');
+      o.value = i+1; o.textContent = m;
+      if (i === now.getMonth()) o.selected = true;
+      ms.appendChild(o);
+    });
+    for (let y = now.getFullYear()+15; y >= now.getFullYear()-3; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === now.getFullYear()) o.selected = true;
+      ys.appendChild(o);
+    }
+  })();
+
   function openMonthlyTransactionsPage() {
     const year  = document.getElementById('anYear').value;
     const month = document.getElementById('anMonth').value;
-    window.open('transactions.html?year='+year+'&month='+month, '_blank');
+    document.getElementById('txfpMonth').value = month;
+    document.getElementById('txfpYear').value  = year;
+    document.getElementById('txFullPage').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    loadTxFullPage();
+  }
+
+  function closeTxFullPage() {
+    document.getElementById('txFullPage').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function txfpPrevMonth() {
+    let m = parseInt(document.getElementById('txfpMonth').value,10) - 1;
+    let y = parseInt(document.getElementById('txfpYear').value,10);
+    if (m < 1) { m = 12; y--; }
+    document.getElementById('txfpMonth').value = m;
+    document.getElementById('txfpYear').value  = y;
+    loadTxFullPage();
+  }
+
+  function txfpNextMonth() {
+    let m = parseInt(document.getElementById('txfpMonth').value,10) + 1;
+    let y = parseInt(document.getElementById('txfpYear').value,10);
+    if (m > 12) { m = 1; y++; }
+    document.getElementById('txfpMonth').value = m;
+    document.getElementById('txfpYear').value  = y;
+    loadTxFullPage();
+  }
+
+  async function loadTxFullPage() {
+    const year  = parseInt(document.getElementById('txfpYear').value,10);
+    const month = parseInt(document.getElementById('txfpMonth').value,10);
+    const dateFrom = new Date(year, month-1, 1).toISOString().split('T')[0];
+    const dateTo   = new Date(year, month, 0).toISOString().split('T')[0];
+
+    const tbody = document.getElementById('txfpBody');
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Loading…</td></tr>';
+    document.getElementById('txfpSearch').value = '';
+
+    const {data, error} = await _supabase
+      .from('completed_reservations')
+      .select('*')
+      .gte('reservation_date', dateFrom)
+      .lte('reservation_date', dateTo)
+      .order('reservation_date')
+      .order('reservation_start_time');
+
+    _txfpAll = (!error && data) ? data : [];
+    renderTxFullPage(_txfpAll);
+  }
+
+  function filterTxFullPage() {
+    const q = document.getElementById('txfpSearch').value.trim().toLowerCase();
+    if (!q) { renderTxFullPage(_txfpAll); return; }
+    renderTxFullPage(_txfpAll.filter(r =>
+      (r.customer_name||'').toLowerCase().includes(q) ||
+      (r.table_number||'').toLowerCase().includes(q) ||
+      (r.completed_by_admin||'').toLowerCase().includes(q) ||
+      (r.payment_method||'').toLowerCase().includes(q)
+    ));
+  }
+
+  function renderTxFullPage(rows) {
+    const tbody = document.getElementById('txfpBody');
+    const grid  = document.getElementById('txfpSummary');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No transactions found for this month.</td></tr>';
+      grid.style.display = 'none';
+      return;
+    }
+    grid.style.display = 'grid';
+    let total=0, cashAmt=0, cardAmt=0;
+    rows.forEach(r => {
+      total += r.payment_amount_rsd||0;
+      if (r.payment_method==='cash') cashAmt += r.payment_amount_rsd||0;
+      if (r.payment_method==='card') cardAmt += r.payment_amount_rsd||0;
+    });
+    document.getElementById('txfpCount').textContent = rows.length;
+    document.getElementById('txfpTotal').textContent = fmt(total)+' RSD';
+    document.getElementById('txfpCash').textContent  = fmt(cashAmt)+' RSD';
+    document.getElementById('txfpCard').textContent  = fmt(cardAmt)+' RSD';
+    document.getElementById('txfpAvg').textContent   = fmt(rows.length?Math.round(total/rows.length):0)+' RSD';
+
+    tbody.innerHTML = rows.map((r,i) =>
+      `<tr>
+        <td class="muted">${i+1}</td>
+        <td>${fmtDate(r.reservation_date)}</td>
+        <td>${(r.reservation_start_time||'').slice(0,5)}</td>
+        <td><strong>${esc(r.customer_name)}</strong></td>
+        <td style="color:var(--copper)">${esc(r.table_number)}</td>
+        <td>${r.guest_count}</td>
+        <td>${payIcon(r.payment_method)}</td>
+        <td style="color:var(--green);font-weight:500">${fmt(r.payment_amount_rsd)}</td>
+        <td class="muted" style="font-size:0.68rem">${esc(r.completed_by_admin)}</td>
+      </tr>`
+    ).join('') + `<tr class="tx-total">
+      <td colspan="7" style="text-align:right">TOTAL</td>
+      <td>${fmt(total)} RSD</td><td></td>
+    </tr>`;
+  }
+
+  function txfpExportPDF() {
+    if (!_txfpAll.length) return;
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const year=document.getElementById('txfpYear').value;
+    const month=document.getElementById('txfpMonth').value;
+    doc.setFillColor(26,26,24); doc.rect(0,0,297,25,'F');
+    doc.setTextColor(184,124,90); doc.setFontSize(16); doc.setFont('helvetica','bold');
+    doc.text('SOKOJ RESTORAN',14,12);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(160,140,120);
+    doc.text('Transaction Records — '+MONTHS[month-1]+' '+year,14,19);
+    let totalAmt=0;
+    const body=_txfpAll.map((r,i)=>{
+      totalAmt+=r.payment_amount_rsd||0;
+      return [i+1,r.reservation_date||'',(r.reservation_start_time||'').slice(0,5),
+        r.customer_name||'',r.table_number||'',r.guest_count,
+        (r.payment_method||'').toUpperCase(),fmt(r.payment_amount_rsd),r.completed_by_admin||''];
+    });
+    body.push(['','','','','','','TOTAL',fmt(totalAmt)+' RSD','']);
+    doc.autoTable({startY:30,head:[['#','Date','Time','Name','Table','Guests','Payment','Amount (RSD)','Admin']],
+      body,styles:{fontSize:8},headStyles:{fillColor:[184,124,90],textColor:255},
+      alternateRowStyles:{fillColor:[245,242,236]},margin:{left:14,right:14}});
+    doc.setFontSize(7);doc.setTextColor(150);
+    doc.text('Generated '+new Date().toLocaleString('en-GB'),14,doc.internal.pageSize.height-8);
+    doc.text('Sokoj Restoran — Confidential',283,doc.internal.pageSize.height-8,{align:'right'});
+    doc.save('sokoj-transactions-'+year+'-'+String(month).padStart(2,'0')+'.pdf');
   }
 </script>
 </body>
