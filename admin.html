@@ -664,7 +664,7 @@
     ═══════════════════════════════════ -->
     <div class="section">
       <div class="section-header">
-        <span class="section-title">Archived Transactions</span>
+        <span class="section-title">Deleted Transactions</span>
         <span class="section-badge" id="archiveBadge">0</span>
         <div class="section-right">
           <button class="filter-btn" id="archiveToggleBtn" onclick="toggleArchiveSection()">Show</button>
@@ -676,7 +676,7 @@
             <thead><tr>
               <th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount</th><th>Archived By</th><th>Actions</th>
             </tr></thead>
-            <tbody id="archiveBody"><tr><td colspan="9" class="empty-state">No archived transactions</td></tr></tbody>
+            <tbody id="archiveBody"><tr><td colspan="9" class="empty-state">No deleted transactions</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1176,7 +1176,7 @@
         <td><span class="status status-${r.status}">${r.status}</span></td>
         <td onclick="event.stopPropagation()"><div class="actions">
           ${r.status==='completed'?`
-          <button class="act-btn act-delete" onclick="archiveCompleted('${r.id}')" title="Archive">Archive</button>
+          <button class="act-btn act-delete" onclick="archiveCompleted('${r.id}')">✕</button>
           `:(r.status==='cancelled'||r.status==='no_show'?`
           <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
           `:`
@@ -1307,12 +1307,12 @@
   async function archiveCompleted(reservationId) {
     _cancelResId = reservationId;
     _modalAction = 'archive';
-    document.getElementById('cancelTitle').textContent = 'Archive Transaction?';
-    document.getElementById('cancelMsg').textContent = 'This will archive the completed reservation. You can view and restore it from the Archived Transactions section.';
+    document.getElementById('cancelTitle').textContent = 'Delete Transaction?';
+    document.getElementById('cancelMsg').textContent = 'This will delete the completed reservation. You can view and restore it from the Deleted Transactions section.';
     const btn = document.getElementById('cancelConfirmBtn');
-    btn.textContent = 'Yes, Archive';
-    btn.style.background = 'rgba(184,124,90,0.2)';
-    btn.style.borderColor = 'rgba(184,124,90,0.5)';
+    btn.textContent = 'Yes, Delete';
+    btn.style.background = 'rgba(180,60,60,0.35)';
+    btn.style.borderColor = 'rgba(180,60,60,0.7)';
     btn.disabled = false;
     document.getElementById('cancelOverlay').classList.add('open');
   }
@@ -1322,12 +1322,12 @@
   confirmModalAction = async function() {
     if (_modalAction === 'archive' && _cancelResId) {
       const btn = document.getElementById('cancelConfirmBtn');
-      btn.textContent = 'Archiving…'; btn.disabled = true;
+      btn.textContent = 'Deleting…'; btn.disabled = true;
       const {error} = await _supabase
         .from('completed_reservations')
         .update({archived: true, archived_at: new Date().toISOString(), archived_by: _adminEmail})
         .eq('reservation_id', _cancelResId);
-      if (error) { alert('Error: ' + error.message); btn.textContent = 'Yes, Archive'; btn.disabled = false; return; }
+      if (error) { alert('Error: ' + error.message); btn.textContent = 'Yes, Delete'; btn.disabled = false; return; }
       closeCancelModal();
       loadAll();
       return;
@@ -1363,7 +1363,7 @@
     const tbody = document.getElementById('archiveBody');
     const badge = document.getElementById('archiveBadge');
     if (error || !data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No archived transactions</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No deleted transactions</td></tr>';
       badge.textContent = '0';
       return;
     }
