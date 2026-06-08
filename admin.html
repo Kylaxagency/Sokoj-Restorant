@@ -659,6 +659,29 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════
+         SECTION 4: ARCHIVED TRANSACTIONS
+    ═══════════════════════════════════ -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Archived Transactions</span>
+        <span class="section-badge" id="archiveBadge">0</span>
+        <div class="section-right">
+          <button class="filter-btn" id="archiveToggleBtn" onclick="toggleArchiveSection()">Show</button>
+        </div>
+      </div>
+      <div id="archiveSection" style="display:none;">
+        <div class="table-wrap">
+          <table class="res-table">
+            <thead><tr>
+              <th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount</th><th>Archived By</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="archiveBody"><tr><td colspan="9" class="empty-state">No archived transactions</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -850,6 +873,16 @@
     loadKPIs();
     loadAnalyticsView();
     loadReservations();
+    loadArchivedCount();
+    if (_archiveOpen) loadArchived();
+  }
+
+  async function loadArchivedCount() {
+    const {count, error} = await _supabase
+      .from('completed_reservations')
+      .select('id', {count: 'exact', head: true})
+      .eq('archived', true);
+    document.getElementById('archiveBadge').textContent = (!error && count) ? count : '0';
   }
 
   /* ── Init date pickers ── */
@@ -948,6 +981,7 @@
       .from('completed_reservations')
       .select('*')
       .eq('reservation_date', date)
+      .eq('archived', false)
       .order('reservation_start_time');
     const wrap  = document.getElementById('dTxWrap');
     const tbody = document.getElementById('dTxBody');
@@ -1054,6 +1088,7 @@
       .select('*')
       .gte('reservation_date', from)
       .lte('reservation_date', to)
+      .eq('archived', false)
       .order('reservation_date')
       .order('reservation_start_time');
     const wrap  = document.getElementById('mTxWrap');
@@ -1140,13 +1175,17 @@
         <td class="muted">${esc(r.customer_email)}<br>${esc(r.customer_phone)}</td>
         <td><span class="status status-${r.status}">${r.status}</span></td>
         <td onclick="event.stopPropagation()"><div class="actions">
-          ${r.status==='completed'||r.status==='cancelled'||r.status==='no_show'?'':`
+          ${r.status==='completed'?`
+          <button class="act-btn act-delete" onclick="archiveCompleted('${r.id}')" title="Archive">Archive</button>
+          `:(r.status==='cancelled'||r.status==='no_show'?`
+          <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
+          `:`
           ${r.status!=='confirmed'?`<button class="act-btn act-confirm" onclick="setStatus('${r.id}','confirmed')">Confirm</button>`:''}
           <button class="act-btn act-complete" onclick="openPayModal('${r.id}')">Done</button>
           <button class="act-btn act-cancel"   onclick="openCancelModal('${r.id}')">Cancel</button>
           <button class="act-btn act-noshow"   onclick="setStatus('${r.id}','no_show')">No Show</button>
-          `}
           <button class="act-btn act-delete" onclick="deleteRes('${r.id}')">✕</button>
+          `)}
         </div></td>
       </tr>
     `).join('');
@@ -1260,6 +1299,88 @@
     document.getElementById('cancelOverlay').classList.remove('open');
     _cancelResId=null;
     _modalAction=null;
+  }
+
+  /* ══════════════════════════════════════
+     ARCHIVE COMPLETED RESERVATIONS
+  ══════════════════════════════════════ */
+  async function archiveCompleted(reservationId) {
+    _cancelResId = reservationId;
+    _modalAction = 'archive';
+    document.getElementById('cancelTitle').textContent = 'Archive Transaction?';
+    document.getElementById('cancelMsg').textContent = 'This will archive the completed reservation. You can view and restore it from the Archived Transactions section.';
+    const btn = document.getElementById('cancelConfirmBtn');
+    btn.textContent = 'Yes, Archive';
+    btn.style.background = 'rgba(184,124,90,0.2)';
+    btn.style.borderColor = 'rgba(184,124,90,0.5)';
+    btn.disabled = false;
+    document.getElementById('cancelOverlay').classList.add('open');
+  }
+
+  // Extend confirmModalAction to handle archive
+  const _origConfirmModal = confirmModalAction;
+  confirmModalAction = async function() {
+    if (_modalAction === 'archive' && _cancelResId) {
+      const btn = document.getElementById('cancelConfirmBtn');
+      btn.textContent = 'Archiving…'; btn.disabled = true;
+      const {error} = await _supabase
+        .from('completed_reservations')
+        .update({archived: true, archived_at: new Date().toISOString(), archived_by: _adminEmail})
+        .eq('reservation_id', _cancelResId);
+      if (error) { alert('Error: ' + error.message); btn.textContent = 'Yes, Archive'; btn.disabled = false; return; }
+      closeCancelModal();
+      loadAll();
+      return;
+    }
+    return _origConfirmModal();
+  };
+
+  async function restoreArchived(id) {
+    const {error} = await _supabase
+      .from('completed_reservations')
+      .update({archived: false, archived_at: null, archived_by: null})
+      .eq('id', id);
+    if (error) { alert('Error restoring: ' + error.message); return; }
+    loadAll();
+  }
+
+  let _archiveOpen = false;
+
+  function toggleArchiveSection() {
+    _archiveOpen = !_archiveOpen;
+    document.getElementById('archiveSection').style.display = _archiveOpen ? 'block' : 'none';
+    document.getElementById('archiveToggleBtn').textContent = _archiveOpen ? 'Hide' : 'Show';
+    if (_archiveOpen) loadArchived();
+  }
+
+  async function loadArchived() {
+    const {data, error} = await _supabase
+      .from('completed_reservations')
+      .select('*')
+      .eq('archived', true)
+      .order('archived_at', {ascending: false});
+
+    const tbody = document.getElementById('archiveBody');
+    const badge = document.getElementById('archiveBadge');
+    if (error || !data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No archived transactions</td></tr>';
+      badge.textContent = '0';
+      return;
+    }
+    badge.textContent = data.length;
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td>${fmtDate(r.reservation_date)}</td>
+        <td>${(r.reservation_start_time||'').slice(0,5)}</td>
+        <td><strong>${esc(r.customer_name)}</strong></td>
+        <td style="color:var(--copper)">${esc(r.table_number)}</td>
+        <td>${r.guest_count}</td>
+        <td>${payIcon(r.payment_method)}</td>
+        <td style="color:var(--green);font-weight:500">${fmt(r.payment_amount_rsd)} RSD</td>
+        <td class="muted" style="font-size:0.68rem">${esc(r.archived_by)}</td>
+        <td><button class="act-btn act-confirm" onclick="restoreArchived('${r.id}')">Restore</button></td>
+      </tr>
+    `).join('');
   }
 
   /* ══════════════════════════════════════
@@ -1402,6 +1523,7 @@
       .select('*')
       .gte('reservation_date', dateFrom)
       .lte('reservation_date', dateTo)
+      .eq('archived', false)
       .order('reservation_date')
       .order('reservation_start_time');
 
