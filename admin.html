@@ -688,7 +688,7 @@
 <div class="modal-overlay" id="cancelOverlay">
   <div class="modal-box cancel-box">
     <div class="cancel-icon">⚠️</div>
-    <h3>Cancel Reservation?</h3>
+    <h3 id="cancelTitle">Cancel Reservation?</h3>
     <p id="cancelMsg">This will cancel the reservation. The table will become available again.</p>
     <div class="cancel-actions">
       <button class="cancel-btn-back" onclick="closeCancelModal()">Keep It</button>
@@ -1211,37 +1211,55 @@
   }
 
   let _cancelResId=null;
+  let _modalAction=null; // 'cancel' or 'delete'
 
   function openCancelModal(id){
     _cancelResId=id;
-    document.getElementById('cancelMsg').textContent='This will cancel the reservation. The table will become available again.';
+    _modalAction='cancel';
+    document.getElementById('cancelTitle').textContent='Cancel Reservation?';
+    document.getElementById('cancelMsg').textContent='Cancel this reservation? The table will become available again.';
     const btn=document.getElementById('cancelConfirmBtn');
-    btn.textContent='Yes, Cancel'; btn.style.background=''; btn.style.borderColor='';
-    btn.onclick=cancelStep2;
+    btn.textContent='Yes, Cancel';
+    btn.style.background='rgba(180,60,60,0.15)';
+    btn.style.borderColor='rgba(180,60,60,0.4)';
+    btn.disabled=false;
     document.getElementById('cancelOverlay').classList.add('open');
   }
-  function cancelStep2(){
-    document.getElementById('cancelMsg').textContent='Are you absolutely sure? This cannot be undone.';
+
+  function deleteRes(id){
+    _cancelResId=id;
+    _modalAction='delete';
+    document.getElementById('cancelTitle').textContent='Delete Reservation?';
+    document.getElementById('cancelMsg').textContent='Permanently delete this reservation? This cannot be undone.';
     const btn=document.getElementById('cancelConfirmBtn');
-    btn.textContent='Cancel Reservation';
-    btn.style.background='rgba(180,60,60,0.35)';btn.style.borderColor='rgba(180,60,60,0.7)';
-    btn.onclick=confirmCancel;
+    btn.textContent='Yes, Delete';
+    btn.style.background='rgba(180,60,60,0.35)';
+    btn.style.borderColor='rgba(180,60,60,0.7)';
+    btn.disabled=false;
+    document.getElementById('cancelOverlay').classList.add('open');
   }
-  async function confirmCancel(){
-    if(!_cancelResId) return;
+
+  document.getElementById('cancelConfirmBtn').addEventListener('click', async function(){
+    if(!_cancelResId || !_modalAction) return;
+    const btn=this;
+    btn.disabled=true;
+    if(_modalAction==='cancel'){
+      btn.textContent='Cancelling…';
+      const{error}=await _supabase.from('reservations').update({status:'cancelled'}).eq('id',_cancelResId);
+      if(error){ alert('Error: '+error.message); btn.textContent='Yes, Cancel'; btn.disabled=false; return; }
+    } else {
+      btn.textContent='Deleting…';
+      const{error}=await _supabase.from('reservations').delete().eq('id',_cancelResId);
+      if(error){ alert('Error: '+error.message); btn.textContent='Yes, Delete'; btn.disabled=false; return; }
+    }
     closeCancelModal();
-    await _supabase.from('reservations').update({status:'cancelled'}).eq('id',_cancelResId);
     loadAll();
-  }
+  });
+
   function closeCancelModal(){
     document.getElementById('cancelOverlay').classList.remove('open');
     _cancelResId=null;
-  }
-
-  async function deleteRes(id){
-    if(!confirm('Permanently delete this reservation?')) return;
-    await _supabase.from('reservations').delete().eq('id',id);
-    loadAll();
+    _modalAction=null;
   }
 
   /* ══════════════════════════════════════
