@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sokoj — Monthly Transactions</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --copper: #b87c5a;
+    --copper-light: #d4a082;
+    --warm-black: #111110;
+    --charcoal: #1a1a18;
+    --stone: #6b6860;
+    --ivory: #f5f2ec;
+    --cream: #ede9e0;
+    --serif: 'Georgia', serif;
+    --sans: system-ui, -apple-system, sans-serif;
+    --green: #6dbf67;
+    --blue: #82b4e0;
+    --red: #e07070;
+    --purple: #c49de0;
+    --border: rgba(184,124,90,0.12);
+    --border-subtle: rgba(255,255,255,0.04);
+    --text-dim: rgba(245,242,236,0.35);
+    --text-muted: rgba(245,242,236,0.5);
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+  body { font-family: var(--sans); background: var(--warm-black); color: var(--ivory); min-height: 100vh; }
+
+  header {
+    background: var(--charcoal); border-bottom: 1px solid var(--border);
+    padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-family: var(--serif); font-size: 1.15rem; font-weight: 300; letter-spacing: 0.02em; }
+  header h1 span { color: var(--copper); }
+  .header-right { display: flex; align-items: center; gap: 0.75rem; }
+  .btn-back {
+    padding: 0.4rem 0.9rem; background: none;
+    border: 0.5px solid rgba(245,242,236,0.15); color: var(--text-muted);
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; border-radius: var(--radius); transition: all 0.2s; text-decoration: none;
+  }
+  .btn-back:hover { border-color: var(--copper); color: var(--copper); }
+
+  .main { padding: 1.5rem 2rem 3rem; max-width: 1200px; margin: 0 auto; }
+
+  .controls {
+    display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+  }
+  .controls select, .controls input {
+    padding: 0.5rem 0.85rem; background: var(--charcoal);
+    border: 1px solid rgba(245,242,236,0.1); color: var(--ivory);
+    font-size: 0.8rem; outline: none; border-radius: var(--radius);
+    transition: border-color 0.2s;
+  }
+  .controls select:focus, .controls input:focus { border-color: var(--copper); }
+  .controls select option { background: var(--charcoal); color: var(--ivory); }
+
+  .btn-sm {
+    padding: 0.42rem 0.9rem; background: none;
+    border: 1px solid rgba(184,124,90,0.35); color: var(--copper);
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s; border-radius: var(--radius);
+  }
+  .btn-sm:hover { background: rgba(184,124,90,0.1); }
+
+  .summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.6rem; margin-bottom: 1.5rem;
+  }
+  .summary-card {
+    text-align: center; padding: 1rem 0.5rem;
+    background: var(--charcoal); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .summary-val { font-family: var(--serif); font-size: 1.4rem; font-weight: 300; line-height: 1.2; }
+  .summary-lbl { font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-top: 0.25rem; }
+  .summary-val.green { color: var(--green); }
+  .summary-val.blue { color: var(--blue); }
+  .summary-val.copper { color: var(--copper); }
+
+  .search-wrap {
+    margin-bottom: 1rem;
+  }
+  .search-wrap input {
+    width: 100%; max-width: 400px; padding: 0.55rem 0.85rem;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(245,242,236,0.08);
+    color: var(--ivory); font-size: 0.8rem; outline: none; border-radius: var(--radius);
+    transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--copper); }
+
+  .tx-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  .tx-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .tx-table thead th {
+    text-align: left; padding: 0.7rem 1rem;
+    font-size: 0.55rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2); position: sticky; top: 0;
+  }
+  .tx-table thead th:first-child { border-radius: var(--radius) 0 0 0; }
+  .tx-table thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+  .tx-table tbody tr { border-bottom: 1px solid var(--border-subtle); transition: background 0.15s; }
+  .tx-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .tx-table tbody td { padding: 0.65rem 1rem; color: rgba(245,242,236,0.85); }
+  .tx-total td { border-top: 1px solid rgba(184,124,90,0.2); color: var(--copper); font-weight: 500; }
+  .muted { color: var(--text-dim); font-size: 0.75rem; }
+  .empty-state { text-align: center; padding: 4rem; color: var(--text-dim); font-style: italic; }
+  .month-title { font-family: var(--serif); font-size: 1.3rem; font-weight: 300; margin-bottom: 1.25rem; color: var(--ivory); }
+  .month-title span { color: var(--copper); }
+  .count-badge { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--text-muted); margin-left: 0.5rem; }
+
+  @media (max-width: 768px) {
+    .main { padding: 1rem; }
+    .summary { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sokoj <span>·</span> Transactions</h1>
+  <div class="header-right">
+    <a href="admin.html" class="btn-back">← Back to Dashboard</a>
+  </div>
+</header>
+
+<div class="main">
+  <div class="controls">
+    <select id="txMonth"></select>
+    <select id="txYear"></select>
+    <button class="btn-sm" onclick="loadTransactions()">Load</button>
+    <button class="btn-sm" onclick="goToPrevMonth()">← Prev Month</button>
+    <button class="btn-sm" onclick="goToNextMonth()">Next Month →</button>
+    <div style="margin-left:auto;">
+      <button class="btn-sm" onclick="exportPDF()">↓ Export PDF</button>
+    </div>
+  </div>
+
+  <div class="month-title" id="monthTitle"></div>
+
+  <div class="summary" id="summaryGrid" style="display:none;">
+    <div class="summary-card"><div class="summary-val copper" id="sTxCount">0</div><div class="summary-lbl">Transactions</div></div>
+    <div class="summary-card"><div class="summary-val green" id="sTotalRev">0 RSD</div><div class="summary-lbl">Total Revenue</div></div>
+    <div class="summary-card"><div class="summary-val green" id="sCashRev">0 RSD</div><div class="summary-lbl">Cash</div></div>
+    <div class="summary-card"><div class="summary-val blue" id="sCardRev">0 RSD</div><div class="summary-lbl">Card</div></div>
+    <div class="summary-card"><div class="summary-val copper" id="sAvgSpend">0 RSD</div><div class="summary-lbl">Avg Spend</div></div>
+  </div>
+
+  <div class="search-wrap">
+    <input type="text" id="txSearch" placeholder="Search by name, table, admin…" oninput="filterTable()">
+  </div>
+
+  <div class="tx-wrap">
+    <table class="tx-table">
+      <thead><tr>
+        <th>#</th><th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
+      </tr></thead>
+      <tbody id="txBody"><tr><td colspan="9" class="empty-state">Select a month and click Load</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://ynnskoxgyshbwrchivxq.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlubnNrb3hneXNoYndyY2hpdnhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDAxNjEsImV4cCI6MjA5NjQxNjE2MX0.3SMXWdDgl5tsRqlAediQ-48uDWf4RE7qZzapGaEsTTE';
+  const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '—'; }
+  function fmt(n) { return (n ?? 0).toLocaleString(); }
+  function fmtDate(d) { return d ? new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) : '—'; }
+  function payIcon(m) {
+    if (!m) return '—';
+    const c = m==='cash'?'var(--green)':'var(--blue)';
+    return '<span style="color:'+c+';font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500">'+m.toUpperCase()+'</span>';
+  }
+
+  let _allTx = [];
+
+  (function init() {
+    const params = new URLSearchParams(window.location.search);
+    const now = new Date();
+    const pYear  = parseInt(params.get('year'),10)  || now.getFullYear();
+    const pMonth = parseInt(params.get('month'),10)  || (now.getMonth()+1);
+
+    const ms = document.getElementById('txMonth');
+    const ys = document.getElementById('txYear');
+    MONTHS.forEach((m,i) => {
+      const o = document.createElement('option');
+      o.value = i+1; o.textContent = m;
+      if (i+1 === pMonth) o.selected = true;
+      ms.appendChild(o);
+    });
+    for (let y = now.getFullYear()+15; y >= now.getFullYear()-3; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === pYear) o.selected = true;
+      ys.appendChild(o);
+    }
+
+    checkAuth();
+  })();
+
+  async function checkAuth() {
+    const {data:{session}} = await _supabase.auth.getSession();
+    if (!session) {
+      window.location.href = 'admin.html';
+      return;
+    }
+    const {data:ar} = await _supabase.from('admins').select('role').eq('email',session.user.email).maybeSingle();
+    if (!ar) {
+      window.location.href = 'admin.html';
+      return;
+    }
+    loadTransactions();
+  }
+
+  function goToPrevMonth() {
+    const ms = document.getElementById('txMonth');
+    const ys = document.getElementById('txYear');
+    let m = parseInt(ms.value,10) - 1;
+    let y = parseInt(ys.value,10);
+    if (m < 1) { m = 12; y--; }
+    ms.value = m; ys.value = y;
+    loadTransactions();
+  }
+
+  function goToNextMonth() {
+    const ms = document.getElementById('txMonth');
+    const ys = document.getElementById('txYear');
+    let m = parseInt(ms.value,10) + 1;
+    let y = parseInt(ys.value,10);
+    if (m > 12) { m = 1; y++; }
+    ms.value = m; ys.value = y;
+    loadTransactions();
+  }
+
+  async function loadTransactions() {
+    const year  = parseInt(document.getElementById('txYear').value,10);
+    const month = parseInt(document.getElementById('txMonth').value,10);
+    const dateFrom = new Date(year, month-1, 1).toISOString().split('T')[0];
+    const dateTo   = new Date(year, month, 0).toISOString().split('T')[0];
+
+    document.getElementById('monthTitle').innerHTML = MONTHS[month-1] + ' ' + year + ' <span>·</span> Transactions';
+
+    const url = new URL(window.location);
+    url.searchParams.set('year', year);
+    url.searchParams.set('month', month);
+    window.history.replaceState({}, '', url);
+
+    const tbody = document.getElementById('txBody');
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Loading…</td></tr>';
+
+    const {data, error} = await _supabase
+      .from('completed_reservations')
+      .select('*')
+      .gte('reservation_date', dateFrom)
+      .lte('reservation_date', dateTo)
+      .order('reservation_date')
+      .order('reservation_start_time');
+
+    if (error) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Error loading transactions.</td></tr>';
+      return;
+    }
+
+    _allTx = data || [];
+    document.getElementById('txSearch').value = '';
+    renderTable(_allTx);
+  }
+
+  function filterTable() {
+    const q = document.getElementById('txSearch').value.trim().toLowerCase();
+    if (!q) { renderTable(_allTx); return; }
+    const filtered = _allTx.filter(r =>
+      (r.customer_name||'').toLowerCase().includes(q) ||
+      (r.table_number||'').toLowerCase().includes(q) ||
+      (r.completed_by_admin||'').toLowerCase().includes(q) ||
+      (r.payment_method||'').toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  function renderTable(rows) {
+    const tbody = document.getElementById('txBody');
+    const grid  = document.getElementById('summaryGrid');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No transactions found for this month.</td></tr>';
+      grid.style.display = 'none';
+      return;
+    }
+
+    grid.style.display = 'grid';
+    let totalAmt = 0, cashAmt = 0, cardAmt = 0, cashCount = 0, cardCount = 0;
+    rows.forEach(r => {
+      totalAmt += r.payment_amount_rsd || 0;
+      if (r.payment_method === 'cash') { cashAmt += r.payment_amount_rsd||0; cashCount++; }
+      if (r.payment_method === 'card') { cardAmt += r.payment_amount_rsd||0; cardCount++; }
+    });
+
+    document.getElementById('sTxCount').textContent  = rows.length;
+    document.getElementById('sTotalRev').textContent  = fmt(totalAmt) + ' RSD';
+    document.getElementById('sCashRev').textContent   = fmt(cashAmt) + ' RSD';
+    document.getElementById('sCardRev').textContent   = fmt(cardAmt) + ' RSD';
+    document.getElementById('sAvgSpend').textContent  = fmt(rows.length ? Math.round(totalAmt/rows.length) : 0) + ' RSD';
+
+    tbody.innerHTML = rows.map((r, i) => {
+      return '<tr>' +
+        '<td class="muted">' + (i+1) + '</td>' +
+        '<td>' + fmtDate(r.reservation_date) + '</td>' +
+        '<td>' + ((r.reservation_start_time||'').slice(0,5)) + '</td>' +
+        '<td><strong>' + esc(r.customer_name) + '</strong></td>' +
+        '<td style="color:var(--copper)">' + esc(r.table_number) + '</td>' +
+        '<td>' + r.guest_count + '</td>' +
+        '<td>' + payIcon(r.payment_method) + '</td>' +
+        '<td style="color:var(--green);font-weight:500">' + fmt(r.payment_amount_rsd) + '</td>' +
+        '<td class="muted" style="font-size:0.68rem">' + esc(r.completed_by_admin) + '</td>' +
+      '</tr>';
+    }).join('') +
+    '<tr class="tx-total">' +
+      '<td colspan="7" style="text-align:right">TOTAL</td>' +
+      '<td>' + fmt(totalAmt) + ' RSD</td><td></td>' +
+    '</tr>';
+  }
+
+  function exportPDF() {
+    if (!_allTx.length) return;
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    const year  = document.getElementById('txYear').value;
+    const month = document.getElementById('txMonth').value;
+
+    doc.setFillColor(26,26,24); doc.rect(0,0,297,25,'F');
+    doc.setTextColor(184,124,90); doc.setFontSize(16); doc.setFont('helvetica','bold');
+    doc.text('SOKOJ RESTORAN', 14, 12);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(160,140,120);
+    doc.text('Transaction Records — ' + MONTHS[month-1] + ' ' + year, 14, 19);
+
+    let totalAmt = 0;
+    const bodyData = _allTx.map((r, i) => {
+      totalAmt += r.payment_amount_rsd || 0;
+      return [
+        i+1,
+        r.reservation_date || '',
+        (r.reservation_start_time||'').slice(0,5),
+        r.customer_name || '',
+        r.table_number || '',
+        r.guest_count,
+        (r.payment_method||'').toUpperCase(),
+        fmt(r.payment_amount_rsd),
+        r.completed_by_admin || ''
+      ];
+    });
+    bodyData.push(['', '', '', '', '', '', 'TOTAL', fmt(totalAmt) + ' RSD', '']);
+
+    doc.autoTable({
+      startY: 30,
+      head: [['#','Date','Time','Name','Table','Guests','Payment','Amount (RSD)','Admin']],
+      body: bodyData,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [184,124,90], textColor: 255 },
+      alternateRowStyles: { fillColor: [245,242,236] },
+      margin: { left: 14, right: 14 }
+    });
+
+    doc.setFontSize(7); doc.setTextColor(150);
+    doc.text('Generated ' + new Date().toLocaleString('en-GB'), 14, doc.internal.pageSize.height - 8);
+    doc.text('Sokoj Restoran — Confidential', 283, doc.internal.pageSize.height - 8, {align:'right'});
+    doc.save('sokoj-transactions-' + year + '-' + String(month).padStart(2,'0') + '.pdf');
+  }
+</script>
+</body>
+</html>

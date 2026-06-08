@@ -551,7 +551,10 @@
           </div>
 
           <div id="mTxWrap" style="display:none;">
-            <div class="subsection-label">Transaction Records</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+              <div class="subsection-label" style="margin-bottom:0;">Transaction Records</div>
+              <button class="btn-sm" id="viewMonthTxBtn" onclick="openMonthlyTransactionsPage()">View Full Page →</button>
+            </div>
             <div class="tx-wrap">
               <table class="tx-table"><thead><tr>
                 <th>Date</th><th>Time</th><th>Name</th><th>Table</th><th>Guests</th><th>Payment</th><th>Amount (RSD)</th><th>Admin</th>
@@ -1224,6 +1227,12 @@
       ? 'sokoj-daily-'+(document.getElementById('anDate').value||'today')+'.pdf'
       : 'sokoj-monthly-'+document.getElementById('anYear').value+'-'+String(document.getElementById('anMonth').value).padStart(2,'0')+'.pdf';
     doc.save(fn);
+  }
+
+  function openMonthlyTransactionsPage() {
+    const year  = document.getElementById('anYear').value;
+    const month = document.getElementById('anMonth').value;
+    window.open('transactions.html?year='+year+'&month='+month, '_blank');
   }
 </script>
 </body>
