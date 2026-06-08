@@ -692,7 +692,7 @@
     <p id="cancelMsg">This will cancel the reservation. The table will become available again.</p>
     <div class="cancel-actions">
       <button class="cancel-btn-back" onclick="closeCancelModal()">Keep It</button>
-      <button class="cancel-btn-confirm" id="cancelConfirmBtn">Yes, Cancel</button>
+      <button class="cancel-btn-confirm" id="cancelConfirmBtn" onclick="confirmModalAction()">Yes, Cancel</button>
     </div>
   </div>
 </div>
@@ -1239,9 +1239,9 @@
     document.getElementById('cancelOverlay').classList.add('open');
   }
 
-  document.getElementById('cancelConfirmBtn').addEventListener('click', async function(){
+  async function confirmModalAction(){
     if(!_cancelResId || !_modalAction) return;
-    const btn=this;
+    const btn=document.getElementById('cancelConfirmBtn');
     btn.disabled=true;
     if(_modalAction==='cancel'){
       btn.textContent='Cancelling…';
@@ -1254,7 +1254,7 @@
     }
     closeCancelModal();
     loadAll();
-  });
+  }
 
   function closeCancelModal(){
     document.getElementById('cancelOverlay').classList.remove('open');
